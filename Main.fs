@@ -16,7 +16,7 @@ let interpret_expr tenv venv e =
 #if DEBUG
     printfn "AST:\t%A\npretty:\t%s" e (pretty_expr e)
 #endif
-    let t = Typing.typecheck_expr tenv e
+    let t = TypeChecking.typecheck_expr tenv e
 #if DEBUG
     printfn "type:\t%s" (pretty_ty t)
 #endif
@@ -47,7 +47,7 @@ let main_interpreter filename =
 
 let main_interactive () =
     printfn "entering interactive mode..."
-    let mutable tenv = Typing.gamma0
+    let mutable tenv = TypeChecking.gamma0
     let mutable venv = []
 
     while true do
