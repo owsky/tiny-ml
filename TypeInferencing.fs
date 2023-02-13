@@ -2,53 +2,19 @@ module TinyML.TypeInferencing
 
 open Ast
 open Utilities
+open TypeInferencingUtils
 
-type subst = (tyvar * ty) list
+let strip chars =
+    String.collect (fun c ->
+        if Seq.exists ((=) c) chars then
+            ""
+        else
+            string c)
 
-// TODO implement this
-let compose_subst (s1: subst) (s2: subst) : subst = s1 @ s2
+let gamma0: scheme env =
+    [ ("+", Forall(Set(seq { fresh_tyvar () }), TyArrow(TyInt, TyArrow(TyInt, TyInt)))) ]
 
-// TODO implement this
-let rec unify (t1: ty) (t2: ty) : subst =
-    match (t1, t2) with
-    | TyName s1, TyName s2 when s1 = s2 -> []
-
-    | TyVar tv, t
-    | t, TyVar tv -> [ tv, t ]
-
-    | TyArrow (t1, t2), TyArrow (t3, t4) -> compose_subst (unify t1 t3) (unify t2 t4)
-
-    | TyTuple ts1, TyTuple ts2 when List.length ts1 = List.length ts2 ->
-        List.zip ts1 ts2
-        |> List.fold (fun s (t1, t2) -> compose_subst s (unify t1 t2)) []
-    | _ -> type_error "Cannot unify types %O and %O" t1 t2
-
-// TODO implement this
-let rec apply_subst (t: ty) (s: subst) : ty =
-    match t with
-    | TyName _ -> t
-    | TyArrow (t1, t2) -> TyArrow(apply_subst t1 s, apply_subst t2 s)
-    | TyVar tv ->
-        try
-            let _, t1 = List.find (fun (tv1, _) -> tv1 = tv) s
-            t1
-        //with KeyNotFoundException -> t
-        with
-        | _ -> t
-    | TyTuple ts -> TyTuple(List.map (fun t -> apply_subst t s) ts)
-
-
-let rec freevars_ty t =
-    match t with
-    | TyName s -> Set.empty
-    | TyArrow (t1, t2) -> (freevars_ty t1) + (freevars_ty t2)
-    | TyVar tv -> Set.singleton tv
-    | TyTuple ts -> List.fold (fun r t -> r + freevars_ty t) Set.empty ts
-
-let freevars_scheme (Forall (tvs, t)) = freevars_ty t - tvs
-
-let freevars_scheme_env env =
-    List.fold (fun r (_, sch) -> r + freevars_scheme sch) Set.empty env
+let (++) = compose_subst
 
 // TODO continue implementing this
 let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
@@ -60,16 +26,163 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
     | Lit (LChar _) -> TyChar, []
     | Lit LUnit -> TyUnit, []
 
+    | Var x ->
+        let _, Forall (tv, ty) = List.find (fun (y, _) -> x = y) env
+        ty, []
+
     | Let (x, tyo, e1, e2) ->
         let t1, s1 = typeinfer_expr env e1
-        let tvs = freevars_ty t1 - freevars_scheme_env env
-        let sch = Forall(tvs, t1)
-        let t2, s2 = typeinfer_expr ((x, sch) :: env) e2
-        t2, compose_subst s2 s1
+        let gamma1 = apply_subst_env env s1
+        let sigma = generalize gamma1 t1
+        let gamma2 = (x, sigma) :: gamma1
+        let t2, s2 = typeinfer_expr gamma2 e2
+        let s3 = s2 ++ s1
 
-    | _ -> failwithf "not implemented"
+        //let tvs = freevars_ty t1 - freevars_scheme_env env
+        //let sch = Forall(tvs, t1)
+        //let t2, s2 = typeinfer_expr ((x, sch) :: env) e2
 
-// basic environment: add builtin operators at will
-let gamma0 =
-    [ ("+", TyArrow(TyInt, TyArrow(TyInt, TyInt)))
-      ("-", TyArrow(TyInt, TyArrow(TyInt, TyInt))) ]
+        match tyo with
+        | Some ty when t2 <> ty ->
+            type_error "Type annotation %s is incompatible with type %s" (pretty_ty ty) (pretty_ty t2)
+        | _ -> t2, s3
+
+    | IfThenElse (e1, e2, e3o) ->
+        let t1, s1 = typeinfer_expr env e1
+        let s2 = unify t1 TyBool
+
+        let s3 = s2 ++ s1
+        let gamma1 = apply_subst_env env s3
+
+        let t2, s4 = typeinfer_expr gamma1 e2
+        let s5 = s4 ++ s3
+        let gamma2 = apply_subst_env gamma1 s5
+
+        if e3o.IsSome then
+            let t3, s6 = typeinfer_expr gamma2 e3o.Value
+            let s7 = s6 ++ s5
+            let s8 = unify (apply_subst t2 s7) (apply_subst t3 s7)
+            apply_subst t2 s8, s8 ++ s7
+        else
+            apply_subst t2 s5, s5
+
+
+    | Lambda (x, tyo, e) ->
+        let alpha = TyVar(fresh_tyvar ())
+        let scheme = Forall(Set.empty, alpha)
+        let gamma1: scheme env = (x, scheme) :: env
+        let t2, s1 = typeinfer_expr gamma1 e
+        let t1 = apply_subst alpha s1
+        let res = TyArrow(t1, t2), s1
+
+        match tyo with
+        | Some ty when ty <> fst res ->
+            type_error "Type annotation '%s' is not compatible with type '%s'" (pretty_ty ty) (pretty_ty (fst res))
+        | _ -> res
+
+
+    | App (e1, e2) ->
+        let t1, s1 = typeinfer_expr env e1
+        let gamma1 = apply_subst_env env s1
+        let t2, s2 = typeinfer_expr gamma1 e2
+        let alpha = TyVar(fresh_tyvar ())
+        let s3 = unify t1 (TyArrow(t2, alpha))
+        let t = apply_subst alpha s3
+        let s4 = s3 ++ s2
+        t, s4
+
+    | Tuple tu ->
+        let (ty, subst) =
+            List.fold
+                (fun acc e ->
+                    let ti, si = typeinfer_expr env e
+                    acc @ [ (ti, si) ])
+                []
+                tu
+            |> List.unzip
+
+        TyTuple(ty), List.last subst
+
+    | LetRec (f, tyo, e1, e2) ->
+        let alpha = TyVar(fresh_tyvar ())
+        let rec_binding = Forall(Set.empty, alpha)
+        let gamma1 = (f, rec_binding) :: env
+        let t1, s1 = typeinfer_expr gamma1 e1
+
+        let gamma2 = apply_subst_env gamma1 s1
+        let sigma = generalize gamma2 t1
+        let gamma3 = (f, sigma) :: gamma2
+
+        let t2, s2 = typeinfer_expr gamma3 e2
+
+        let s3 = s2 ++ s1
+        t2, s3
+
+    // Math operators
+    | BinOp (e1,
+             ("+"
+             | "-"
+             | "*"
+             | "/"
+             | "%"),
+             e2) ->
+        //let t1, s1 = typeinfer_expr env e1
+        //let t2, s2 = typeinfer_expr env e2
+        //let s = unify t1 t2 ++ s2 ++ s1
+        //let t = apply_subst t1 s
+        //t, s
+        let t1, s1 = typeinfer_expr env e1
+        let s2 = unify t1 TyInt
+        let s3 = s2 ++ s1
+        let gamma1 = apply_subst_env env s3
+        let t2, s4 = typeinfer_expr gamma1 e2
+        let s5 = unify t2 TyInt
+        let s6 = s5 ++ s4 ++ s3
+
+        TyInt, s6
+
+    | BinOp (e1,
+             ("<"
+             | "<="
+             | "="
+             | ">="
+             | ">"
+             | "<>"),
+             e2) ->
+        let t1, s1 = typeinfer_expr env e1
+        let s2 = unify t1 TyInt
+        let t2, s3 = typeinfer_expr env e2
+        let s4 = unify t2 TyInt
+        let s = s4 ++ s3 ++ s2 ++ s1
+        TyBool, s
+
+    | BinOp (e1,
+             ("and"
+             | "or" as op),
+             e2) ->
+        let t1, s1 = typeinfer_expr env e1
+        let t2, s2 = typeinfer_expr env e2
+        let s3 = unify t1 TyBool
+        let s4 = unify t2 TyBool
+        let s = s4 ++ s3 ++ s2 ++ s1
+        TyBool, s
+
+    | BinOp (_, op, _) -> unexpected_error "typecheck_expr: unsupported binary operator (%s)" op
+
+    | UnOp ("not", e) ->
+        let t, s1 = typeinfer_expr env e
+        let s2 = unify t TyBool ++ s1
+        TyBool, s2
+
+    | UnOp ("-", e) ->
+        let t, s1 = typeinfer_expr env e
+        printfn "Unifying first %O with %O, then %O with %O" t TyInt t TyFloat
+        let s2 = unify t TyInt
+        let s3 = unify t TyFloat
+        let s = s3 ++ s2 ++ s1
+        apply_subst t s, s
+
+    | UnOp (op, _) -> unexpected_error "typecheck_expr: unsupported unary operator (%s)" op
+
+
+    | e -> failwithf "Expression %O is not yet implemented" e

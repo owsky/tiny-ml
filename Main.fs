@@ -7,33 +7,25 @@ module TinyML.Main
 
 open System
 open FSharp.Common
-open TinyML.Ast
+open Ast
+open Utilities
 
 let parse_from_TextReader rd filename parser =
     Parsing.parse_from_TextReader SyntaxError rd filename (1, 1) parser Lexer.tokenize Parser.tokenTagToTokenId
 
-let interpret_expr tenv venv e =
+let interpret_expr tenv venv e : (ty * subst) * value =
 #if DEBUG
     printfn "AST:\t%A\npretty:\t%s" e (pretty_expr e)
 #endif
-    let t = TypeChecking.typecheck_expr tenv e
+    let t = TypeInferencing.typeinfer_expr tenv e
 #if DEBUG
-    printfn "type:\t%s" (pretty_ty t)
+    printfn "type:\t%s" (pretty_ty (fst t))
 #endif
     let v = Eval.eval_expr venv e
 #if DEBUG
     printfn "value:\t%s\n" (pretty_value v)
 #endif
     t, v
-
-let trap f =
-    try
-        f ()
-    with
-    | SyntaxError (msg, lexbuf) ->
-        printfn "\nsyntax error: %s\nat token: %A\nlocation: %O" msg lexbuf.Lexeme lexbuf.EndPos
-    | TypeError msg -> printfn "\ntype error: %s" msg
-    | UnexpectedError msg -> printfn "\nunexpected error: %s" msg
 
 let main_interpreter filename =
     trap
@@ -43,11 +35,11 @@ let main_interpreter filename =
         use rd = new IO.StreamReader(fstr)
         let prg = parse_from_TextReader rd filename Parser.program
         let t, v = interpret_expr [] [] prg
-        printfn "type:\t%s\nvalue:\t%s" (pretty_ty t) (pretty_value v)
+        printfn "type:\t%s\nvalue:\t%s" (pretty_ty (fst t)) (pretty_value v)
 
 let main_interactive () =
     printfn "entering interactive mode..."
-    let mutable tenv = TypeChecking.gamma0
+    let mutable tenv = TypeInferencing.gamma0
     let mutable venv = []
 
     while true do
@@ -63,11 +55,14 @@ let main_interactive () =
                 | IBinding (_, x, _, _ as b) ->
                     let t, v = interpret_expr tenv venv (LetIn(b, Var x)) // TRICK: put the variable itself as body after the in
                     // update global environments
-                    tenv <- (x, t) :: tenv
+                    tenv <-
+                        (x, TypeInferencingUtils.generalize tenv (fst t))
+                        :: tenv
+
                     venv <- (x, v) :: venv
                     x, (t, v)
 
-            printfn "val %s : %s = %s" x (pretty_ty t) (pretty_value v)
+            printfn "val %s : %s = %s" x (pretty_ty (fst t)) (pretty_value v)
 
 
 [<EntryPoint>]

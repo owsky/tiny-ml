@@ -95,20 +95,22 @@ type interactive =
     | IExpr of expr
     | IBinding of binding
 
+type subst = (tyvar * ty) list
+
 // pretty printers
 
-// utility function for printing lists by flattening strings with a separator
+/// utility function for printing lists by flattening strings with a separator
 let rec flatten p sep es =
     match es with
     | [] -> ""
     | [ e ] -> p e
     | e :: es -> sprintf "%s%s %s" (p e) sep (flatten p sep es)
 
-// print pairs within the given env using p as printer for the elements bound within
+/// print pairs within the given env using p as printer for the elements bound within
 let pretty_env p env =
     sprintf "[%s]" (flatten (fun (x, o) -> sprintf "%s=%s" x (p o)) ";" env)
 
-// print any tuple given a printer p for its elements
+/// print any tuple given a printer p for its elements
 let pretty_tupled p l = flatten p ", " l
 
 let rec pretty_ty t =
