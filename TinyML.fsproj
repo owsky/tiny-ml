@@ -95,7 +95,6 @@
     <Compile Include="TypeInferencingUtils.fs" />
     <Compile Include="TypeInferencing.fs" />
     <Compile Include="Eval.fs" />
-    <Compile Include="Test.fs" />
     <Compile Include="Main.fs" />
     <None Include="App.config" />
     <Content Include="packages.config" />

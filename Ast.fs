@@ -11,11 +11,11 @@ open Printf
 exception SyntaxError of string * FSharp.Text.Lexing.LexBuffer<char>
 exception TypeError of string
 exception UnexpectedError of string
+exception UndefinedError of string
 
 let throw_formatted exnf fmt = ksprintf (fun s -> raise (exnf s)) fmt
 
 let unexpected_error fmt = throw_formatted UnexpectedError fmt
-
 
 // AST type definitions
 type tyvar = int
@@ -25,6 +25,8 @@ type ty =
     | TyArrow of ty * ty
     | TyVar of tyvar
     | TyTuple of ty list
+
+type subst = (tyvar * ty) list
 
 // pseudo data constructors for literal types
 let TyFloat = TyName "float"
@@ -94,8 +96,6 @@ type value =
 type interactive =
     | IExpr of expr
     | IBinding of binding
-
-type subst = (tyvar * ty) list
 
 // pretty printers
 
@@ -175,3 +175,62 @@ let rec pretty_value v =
     | Closure (env, x, e) -> sprintf "<|%s;%s;%s|>" (pretty_env pretty_value env) x (pretty_expr e)
 
     | RecClosure (env, f, x, e) -> sprintf "<|%s;%s;%s;%s|>" (pretty_env pretty_value env) f x (pretty_expr e)
+
+// The function that normalizes the tyvars in a type with a counter starting from 0
+let normalize_tyvars ty =
+    let counter = ref -1 // create a local counter
+
+    let fresh_tyvar () = // create a local fresh_tyvar function
+        counter := !counter + 1
+        !counter
+    // A helper function that creates a mapping from old tyvars to new tyvars with the updated counter
+    let rec create_mapping ty (map: Map<tyvar, tyvar>) =
+        match ty with
+        | TyName _ -> map // no tyvars in TyName
+        | TyArrow (t1, t2) -> // create mapping for both subtypes
+            let map1 = create_mapping t1 map
+            create_mapping t2 map1
+        | TyVar v -> // check if the tyvar is already in the map
+            if map.ContainsKey v then
+                map
+            else
+                map.Add(v, fresh_tyvar ()) // otherwise, add a new mapping
+        | TyTuple ts -> // create mapping for each subtype in the list
+            List.fold (fun m t -> create_mapping t m) map ts
+
+    let map = create_mapping ty Map.empty // create the mapping
+
+    let rec apply_mapping ty = // a helper function that applies the mapping
+        match ty with
+        | TyName _ -> ty // no change for TyName
+        | TyArrow (t1, t2) -> // apply mapping for both subtypes
+            TyArrow(apply_mapping t1, apply_mapping t2)
+        | TyVar v -> // look up the new tyvar in the map
+            TyVar(map.[v])
+        | TyTuple ts -> // apply mapping for each subtype in the list
+            TyTuple(List.map apply_mapping ts)
+
+    apply_mapping ty // apply the mapping to the type
+
+// A helper function that converts an integer to a letter or a letter-number combination
+let int_to_letter (n: int) : string =
+    let alphabet = "abcdefghijklmnopqrstuvwxyz"
+    let len = alphabet.Length
+
+    if n < len then // if n is less than 26, use a single letter
+        alphabet.[n].ToString()
+    else // otherwise, use a letter-number combination
+        let div = n / len // the quotient of n divided by 26
+        let rem = n % len // the remainder of n divided by 26
+        alphabet.[div - 1].ToString() + rem.ToString() // use the letter at the (div - 1)th position and the remainder as a number
+
+// The main function that replaces integers in a string with letters or letter-number combinations
+let replace_integers (s: string) : string =
+    let regex = System.Text.RegularExpressions.Regex("[0-9]+") // a regular expression that matches one or more digits
+
+    let replacer =
+        fun (m: System.Text.RegularExpressions.Match) -> // a function that takes a match and returns a replacement
+            let n = int m.Value // convert the matched string to an integer
+            int_to_letter n // convert the integer to a letter or a letter-number combination
+
+    regex.Replace(s, replacer) // replace all matches in the string with the replacer function

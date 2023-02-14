@@ -35,7 +35,13 @@ let main_interpreter filename =
         use rd = new IO.StreamReader(fstr)
         let prg = parse_from_TextReader rd filename Parser.program
         let t, v = interpret_expr [] [] prg
-        printfn "type:\t%s\nvalue:\t%s" (pretty_ty (fst t)) (pretty_value v)
+
+        printfn
+            "type:\t%s\nvalue:\t%s"
+            (normalize_tyvars (fst t)
+             |> pretty_ty
+             |> replace_integers)
+            (pretty_value v)
 
 let main_interactive () =
     printfn "entering interactive mode..."
@@ -62,7 +68,13 @@ let main_interactive () =
                     venv <- (x, v) :: venv
                     x, (t, v)
 
-            printfn "val %s : %s = %s" x (pretty_ty (fst t)) (pretty_value v)
+            printfn
+                "val %s : %s = %s"
+                x
+                (normalize_tyvars (fst t)
+                 |> pretty_ty
+                 |> replace_integers)
+                (pretty_value v)
 
 
 [<EntryPoint>]

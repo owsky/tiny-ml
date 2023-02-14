@@ -3,11 +3,7 @@ module TinyML.Parser
 
 #nowarn "64" // turn off warnings that type variables used in production annotations are instantiated to concrete type
 
-open FSharp.Text.Lexing
 open FSharp.Text.Parsing.ParseHelpers
-
-
-open TinyML
 open FSharp.Common.Parsing.LexYacc
 open TinyML.Ast
 

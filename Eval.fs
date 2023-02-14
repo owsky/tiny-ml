@@ -11,10 +11,6 @@ let rec eval_expr (env: value env) (e: expr) : value =
     match e with
     | Lit lit -> VLit lit
 
-    | Var x ->
-        let _, v = List.find (fun (y, _) -> x = y) env
-        v
-
     | Lambda (x, _, e) -> Closure(env, x, e)
 
     | App (e1, e2) ->
@@ -25,6 +21,10 @@ let rec eval_expr (env: value env) (e: expr) : value =
         | Closure (env1, x, e) -> eval_expr ((x, v2) :: env1) e
         | RecClosure (env1, f, x, e) -> eval_expr ((x, v2) :: (f, v1) :: env1) e
         | _ -> unexpected_error "eval_expr: non-closure in left side of application: %s" (pretty_value v1)
+
+    | Var x ->
+        let _, v = List.find (fun (y, _) -> x = y) env
+        v
 
     | IfThenElse (e1, e2, None) ->
         let v1 = eval_expr env e1
@@ -53,15 +53,29 @@ let rec eval_expr (env: value env) (e: expr) : value =
     | LetRec (f, _, e1, e2) ->
         let v1 = eval_expr env e1
 
-        match v1 with
-        | Closure (venv1, x, e) -> RecClosure(venv1, f, x, e)
-        | _ -> unexpected_error "eval_expr: expected closure in rec binding but got: %s" (pretty_value v1)
-    // TODO finish this implementation
+        let recclo =
+            match v1 with
+            | Closure (venv1, x, e) -> RecClosure(venv1, f, x, e)
+            | _ -> unexpected_error "eval_expr: expected closure in rec binding but got: %s" (pretty_value v1)
 
+        let env2 = (f, recclo) :: env
+        eval_expr env2 e2
+
+    | Tuple tu -> VTuple(List.map (fun x -> eval_expr env x) tu)
+
+    // Arithmetic operators
     | BinOp (e1, "+", e2) -> binop (+) (+) env e1 e2
     | BinOp (e1, "-", e2) -> binop (-) (-) env e1 e2
     | BinOp (e1, "*", e2) -> binop (*) (*) env e1 e2
-    // TODO: implement other binary ops
+
+    // Comparison operators
+    | BinOp (e1, "<", e2) -> boolop (<) (<) env e1 e2
+    | BinOp (e1, "<=", e2) -> boolop (<=) (<=) env e1 e2
+    | BinOp (e1, "=", e2) -> boolop (=) (=) env e1 e2
+    | BinOp (e1, ">=", e2) -> boolop (>=) (>=) env e1 e2
+    | BinOp (e1, ">", e2) -> boolop (>) (>) env e1 e2
+
+    | UnOp (op, e) -> failwith "TODO"
 
     | _ -> unexpected_error "eval_expr: unsupported expression: %s [AST: %A]" (pretty_expr e) e
 
@@ -79,3 +93,25 @@ and binop op_int op_float env e1 e2 =
             "eval_expr: illegal operands in binary operator (+): %s + %s"
             (pretty_value v1)
             (pretty_value v2)
+
+and boolop op_int op_float env e1 e2 =
+    let v1 = eval_expr env e1
+    let v2 = eval_expr env e2
+
+    match v1, v2 with
+    | VLit (LInt x), VLit (LInt y) -> VLit(LBool(op_int x y))
+    | VLit (LFloat x), VLit (LFloat y) -> VLit(LBool(op_float x y))
+    | VLit (LInt x), VLit (LFloat y) -> VLit(LBool(op_float (float x) y))
+    | VLit (LFloat x), VLit (LInt y) -> VLit(LBool(op_float x (float y)))
+    | _ ->
+        unexpected_error
+            "eval_expr: illegal operands in binary comparison operator: %s, %s"
+            (pretty_value v1)
+            (pretty_value v2)
+
+and unop op env e =
+    let v = eval_expr env e
+
+    match v with
+    | VLit (LBool x) -> VLit(LBool(op e))
+    | _ -> unexpected_error "eval_expr: illegal operand in unary boolean operator: %s" (pretty_value v)

@@ -1,18 +1,13 @@
+(*
+let rec fact x =
+	if x = 1 then 1
+	else x * fact (x - (1))
+in
+let fact3 = fact 3 in
 
-(* comment 
-   in many 
-   lines *)
+let a = 20 in
+let b = if a < 5 then true else false in
 
-// line comment
-
-let f x y = (x, y) in
-let g x = f x x
-in ()
-
-
-let f = fun x -> (x + 1, if x then 1 else 2)
-
-
-
-
-
+let f x y z = x * y * z in f 1 2 3
+*)
+(fun x->x)5

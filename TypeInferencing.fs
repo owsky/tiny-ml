@@ -4,19 +4,10 @@ open Ast
 open Utilities
 open TypeInferencingUtils
 
-let strip chars =
-    String.collect (fun c ->
-        if Seq.exists ((=) c) chars then
-            ""
-        else
-            string c)
-
-let gamma0: scheme env =
-    [ ("+", Forall(Set(seq { fresh_tyvar () }), TyArrow(TyInt, TyArrow(TyInt, TyInt)))) ]
+let gamma0: scheme env = []
 
 let (++) = compose_subst
 
-// TODO continue implementing this
 let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
     match e with
     | Lit (LInt _) -> TyInt, []
@@ -27,8 +18,12 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
     | Lit LUnit -> TyUnit, []
 
     | Var x ->
-        let _, Forall (tv, ty) = List.find (fun (y, _) -> x = y) env
-        ty, []
+        try
+
+            let _, Forall (tv, ty) = List.find (fun (y, _) -> x = y) env
+            ty, []
+        with
+        | _ -> throw_formatted UndefinedError "The value or constructor '%s' is not defined." x
 
     | Let (x, tyo, e1, e2) ->
         let t1, s1 = typeinfer_expr env e1
@@ -37,10 +32,6 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
         let gamma2 = (x, sigma) :: gamma1
         let t2, s2 = typeinfer_expr gamma2 e2
         let s3 = s2 ++ s1
-
-        //let tvs = freevars_ty t1 - freevars_scheme_env env
-        //let sch = Forall(tvs, t1)
-        //let t2, s2 = typeinfer_expr ((x, sch) :: env) e2
 
         match tyo with
         | Some ty when t2 <> ty ->
@@ -68,10 +59,9 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
 
 
     | Lambda (x, tyo, e) ->
-        let alpha = TyVar(fresh_tyvar ())
+        let alpha = fresh_tyvar ()
         let scheme = Forall(Set.empty, alpha)
-        let gamma1: scheme env = (x, scheme) :: env
-        let t2, s1 = typeinfer_expr gamma1 e
+        let t2, s1 = typeinfer_expr ((x, scheme) :: env) e
         let t1 = apply_subst alpha s1
         let res = TyArrow(t1, t2), s1
 
@@ -80,13 +70,12 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
             type_error "Type annotation '%s' is not compatible with type '%s'" (pretty_ty ty) (pretty_ty (fst res))
         | _ -> res
 
-
     | App (e1, e2) ->
         let t1, s1 = typeinfer_expr env e1
-        let gamma1 = apply_subst_env env s1
-        let t2, s2 = typeinfer_expr gamma1 e2
-        let alpha = TyVar(fresh_tyvar ())
-        let s3 = unify t1 (TyArrow(t2, alpha))
+        let t2, s2 = typeinfer_expr (apply_subst_env env s1) e2
+        let alpha = fresh_tyvar ()
+        // WHY FLIPPED
+        let s3 = unify (TyArrow(t2, alpha)) t1
         let t = apply_subst alpha s3
         let s4 = s3 ++ s2
         t, s4
@@ -104,7 +93,7 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
         TyTuple(ty), List.last subst
 
     | LetRec (f, tyo, e1, e2) ->
-        let alpha = TyVar(fresh_tyvar ())
+        let alpha = fresh_tyvar ()
         let rec_binding = Forall(Set.empty, alpha)
         let gamma1 = (f, rec_binding) :: env
         let t1, s1 = typeinfer_expr gamma1 e1
