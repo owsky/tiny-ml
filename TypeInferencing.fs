@@ -4,38 +4,7 @@ open Ast
 open Utilities
 open TypeInferencingUtils
 
-let gamma0: scheme env =
-    [
-      // arithmetic int ops
-      ("+", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyInt))))
-      ("-", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyInt))))
-      ("/", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyInt))))
-      ("*", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyInt))))
-      ("%", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyInt))))
-      // arithmetic float ops
-      ("+.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyFloat))))
-      ("-.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyFloat))))
-      ("/.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyFloat))))
-      ("*.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyFloat))))
-      ("%.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyFloat))))
-      // comparison int ops
-      ("<", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyBool))))
-      ("<=", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyBool))))
-      ("=", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyBool))))
-      (">=", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyBool))))
-      (">", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyBool))))
-      // comparison float ops
-      ("<.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyBool))))
-      ("<=.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyBool))))
-      ("=.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyBool))))
-      (">=.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyBool))))
-      (">.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyBool))))
-      // boolean ops
-      ("and", generalize [] (TyArrow(TyBool, TyArrow(TyBool, TyBool))))
-      ("or", generalize [] (TyArrow(TyBool, TyArrow(TyBool, TyBool))))
-      ("not", generalize [] (TyArrow(TyBool, TyArrow(TyBool, TyBool))))
-
-      ]
+let gamma0: scheme env = ops_types
 
 let (++) = compose_subst
 
