@@ -115,20 +115,18 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
              | "/"
              | "%"),
              e2) ->
-        //let t1, s1 = typeinfer_expr env e1
-        //let t2, s2 = typeinfer_expr env e2
-        //let s = unify t1 t2 ++ s2 ++ s1
-        //let t = apply_subst t1 s
-        //t, s
+        let supported_types = [ TyInt; TyFloat ]
         let t1, s1 = typeinfer_expr env e1
-        let s2 = unify t1 TyInt
+        let t2, s2 = typeinfer_expr (apply_subst_env env s1) e2
         let s3 = s2 ++ s1
-        let gamma1 = apply_subst_env env s3
-        let t2, s4 = typeinfer_expr gamma1 e2
-        let s5 = unify t2 TyInt
-        let s6 = s5 ++ s4 ++ s3
+        let s4 = unify t1 t2
+        let s5 = s4 ++ s3
+        let t3 = apply_subst t1 s5
+        let s6 = try_unify t3 supported_types
 
-        TyInt, s6
+        match s6 with
+        | Some s -> t3, s
+        | None -> type_error "arithmetic operators only support numeric types"
 
     | BinOp (e1,
              ("<"

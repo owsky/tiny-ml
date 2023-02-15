@@ -93,7 +93,20 @@ let rec unify (t1: ty) (t2: ty) : subst =
     | TyArrow (_, _), w
     | w, TyArrow (_, _) -> type_error "expected type function, got %s instead" (pretty_ty w)
 
-    | _ -> type_error "Cannot unify types %s and %s" (pretty_ty t1) (pretty_ty t2)
+    | _ -> type_error "The type %s does not match the type %s" (pretty_ty t1) (pretty_ty t2)
+
+let try_unify (t1: ty) (l: ty list) : subst option =
+    List.fold
+        (fun acc t2 ->
+            if acc.IsNone then
+                try
+                    Some(unify t1 t2)
+                with
+                | _ -> None
+            else
+                acc)
+        None
+        l
 
 /// Returns the free type variables contained in a type
 let rec freevars_ty t =
