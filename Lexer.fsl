@@ -48,10 +48,15 @@ and tokenize = parse
 	| "(*"          	{ comment 0 lexbuf }
      
 	| '+'			{ PLUS }
+	| "+."			{ PLUS_DOT }
 	| '-'			{ MINUS }
+	| "-."			{ MINUS_DOT }
 	| '*'			{ STAR }
+	| "*."			{ STAR_DOT }
 	| '/'			{ SLASH }
+	| "/."			{ SLASH_DOT }
 	| '%'			{ PERCENT }
+	| "%."			{ PERCENT_DOT }
 	| '='			{ EQ }
 	| "<>"			{ NEQ }
 	| '<'			{ LT }

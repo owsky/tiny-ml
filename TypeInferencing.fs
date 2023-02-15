@@ -4,7 +4,20 @@ open Ast
 open Utilities
 open TypeInferencingUtils
 
-let gamma0: scheme env = []
+let gamma0: scheme env =
+    [
+      // int ops
+      ("+", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyInt))))
+      ("-", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyInt))))
+      ("/", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyInt))))
+      ("*", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyInt))))
+      ("%", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyInt))))
+      // float ops
+      ("+.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyFloat))))
+      ("-.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyFloat))))
+      ("/.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyFloat))))
+      ("*.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyFloat))))
+      ("%.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyFloat)))) ]
 
 let (++) = compose_subst
 
@@ -93,6 +106,9 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
         TyTuple(ty), List.last subst
 
     | LetRec (f, tyo, e1, e2) ->
+        if tyo.IsSome then
+            printfn "TYO: %O\n\n" (pretty_ty (tyo.Value))
+
         let alpha = fresh_tyvar ()
         let rec_binding = Forall(Set.empty, alpha)
         let gamma1 = (f, rec_binding) :: env
@@ -108,68 +124,65 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
         t2, s3
 
     // Math operators
-    | BinOp (e1,
-             ("+"
-             | "-"
-             | "*"
-             | "/"
-             | "%"),
-             e2) ->
-        let supported_types = [ TyInt; TyFloat ]
-        let t1, s1 = typeinfer_expr env e1
-        let t2, s2 = typeinfer_expr (apply_subst_env env s1) e2
-        let s3 = s2 ++ s1
-        let s4 = unify t1 t2
-        let s5 = s4 ++ s3
-        let t3 = apply_subst t1 s5
-        let s6 = try_unify t3 supported_types
+    | BinOp (e1, op, e2) -> typeinfer_expr env (App(App(Var op, e1), e2))
+    //let t1, s1 = typeinfer_expr env e1
+    //let t2, s2 = typeinfer_expr (apply_subst_env env s1) e2
+    //let s3 = s2 ++ s1
+    //let s4 = unify t1 t2
+    //let s5 = s4 ++ s3
+    //let t3 = apply_subst t1 s5
+    //let s6 = try_unify t3 numeric_types
 
-        match s6 with
-        | Some s -> t3, s
-        | None -> type_error "arithmetic operators only support numeric types"
+    //match s6 with
+    //| Some s -> apply_subst t3 s, s ++ s5
+    //| None -> type_error "arithmetic operators only support numeric types"
 
-    | BinOp (e1,
-             ("<"
-             | "<="
-             | "="
-             | ">="
-             | ">"
-             | "<>"),
-             e2) ->
-        let t1, s1 = typeinfer_expr env e1
-        let s2 = unify t1 TyInt
-        let t2, s3 = typeinfer_expr env e2
-        let s4 = unify t2 TyInt
-        let s = s4 ++ s3 ++ s2 ++ s1
-        TyBool, s
+    //| BinOp (e1,
+    //         ("<"
+    //         | "<="
+    //         | "="
+    //         | ">="
+    //         | ">"
+    //         | "<>"),
+    //         e2) ->
+    //    let t1, s1 = typeinfer_expr env e1
+    //    let t2, s2 = typeinfer_expr (apply_subst_env env s1) e2
+    //    let s3 = s2 ++ s1
+    //    let s4 = unify t1 t2
+    //    let s5 = s4 ++ s3
+    //    let t = apply_subst t1 s5
+    //    let s6 = try_unify t numeric_types
 
-    | BinOp (e1,
-             ("and"
-             | "or" as op),
-             e2) ->
-        let t1, s1 = typeinfer_expr env e1
-        let t2, s2 = typeinfer_expr env e2
-        let s3 = unify t1 TyBool
-        let s4 = unify t2 TyBool
-        let s = s4 ++ s3 ++ s2 ++ s1
-        TyBool, s
+    //    match s6 with
+    //    | Some s -> TyBool, s
+    //    | None -> type_error "arithmetic operators only support numeric types"
 
-    | BinOp (_, op, _) -> unexpected_error "typecheck_expr: unsupported binary operator (%s)" op
+    //| BinOp (e1,
+    //         ("and"
+    //         | "or" as op),
+    //         e2) ->
+    //    let t1, s1 = typeinfer_expr env e1
+    //    let t2, s2 = typeinfer_expr env e2
+    //    let s3 = unify t1 TyBool
+    //    let s4 = unify t2 TyBool
+    //    let s = s4 ++ s3 ++ s2 ++ s1
+    //    TyBool, s
 
-    | UnOp ("not", e) ->
-        let t, s1 = typeinfer_expr env e
-        let s2 = unify t TyBool ++ s1
-        TyBool, s2
+    //| BinOp (_, op, _) -> unexpected_error "typecheck_expr: unsupported binary operator (%s)" op
 
-    | UnOp ("-", e) ->
-        let t, s1 = typeinfer_expr env e
-        printfn "Unifying first %O with %O, then %O with %O" t TyInt t TyFloat
-        let s2 = unify t TyInt
-        let s3 = unify t TyFloat
-        let s = s3 ++ s2 ++ s1
-        apply_subst t s, s
+    //| UnOp ("not", e) ->
+    //    let t, s1 = typeinfer_expr env e
+    //    let s2 = unify t TyBool ++ s1
+    //    TyBool, s2
+
+    //| UnOp ("-", e) ->
+    //    let t, s1 = typeinfer_expr env e
+    //    let s2 = try_unify t numeric_types
+
+    //    match s2 with
+    //    | Some s -> t, s
+    //    | None -> type_error "minus operator only supports numeric types"
 
     | UnOp (op, _) -> unexpected_error "typecheck_expr: unsupported unary operator (%s)" op
 
-
-    | e -> failwithf "Expression %O is not yet implemented" e
+    | _ -> unexpected_error "typecheck_expr: unsupported expression: %s [AST: %A]" (pretty_expr e) e

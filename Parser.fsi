@@ -19,6 +19,11 @@ type token =
   | STAR
   | SLASH
   | PERCENT
+  | PLUS_DOT
+  | MINUS_DOT
+  | STAR_DOT
+  | SLASH_DOT
+  | PERCENT_DOT
   | LT
   | GT
   | LEQ
@@ -55,6 +60,11 @@ type tokenId =
     | TOKEN_STAR
     | TOKEN_SLASH
     | TOKEN_PERCENT
+    | TOKEN_PLUS_DOT
+    | TOKEN_MINUS_DOT
+    | TOKEN_STAR_DOT
+    | TOKEN_SLASH_DOT
+    | TOKEN_PERCENT_DOT
     | TOKEN_LT
     | TOKEN_GT
     | TOKEN_LEQ

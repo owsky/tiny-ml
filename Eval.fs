@@ -7,6 +7,8 @@ module TinyML.Eval
 
 open Ast
 
+let poly op e1 e2 = op e1 e2
+
 let rec eval_expr (env: value env) (e: expr) : value =
     match e with
     | Lit lit -> VLit lit
@@ -66,15 +68,34 @@ let rec eval_expr (env: value env) (e: expr) : value =
     | BinOp (e1, "+", e2) -> binop (+) (+) env e1 e2
     | BinOp (e1, "-", e2) -> binop (-) (-) env e1 e2
     | BinOp (e1, "*", e2) -> binop (*) (*) env e1 e2
+    | BinOp (e1, "/", e2) -> binop (/) (/) env e1 e2
+    | BinOp (e1, "%", e2) -> binop (%) (%) env e1 e2
+
+    | BinOp (e1, "+.", e2) -> binop (+) (+) env e1 e2
+    | BinOp (e1, "-.", e2) -> binop (-) (-) env e1 e2
+    | BinOp (e1, "*.", e2) -> binop (*) (*) env e1 e2
+    | BinOp (e1, "/.", e2) -> binop (/) (/) env e1 e2
+    | BinOp (e1, "%.", e2) -> binop (%) (%) env e1 e2
+
+    | UnOp ("-", e) ->
+        let v = eval_expr env e
+
+        match v with
+        | VLit (LInt x) -> VLit(LInt(-x))
+        | VLit (LFloat x) -> VLit(LFloat(-x))
+        | _ -> unexpected_error "eval_expr: illegal operand in unary boolean operator: %s" (pretty_value v)
 
     // Comparison operators
-    | BinOp (e1, "<", e2) -> boolop (<) (<) env e1 e2
-    | BinOp (e1, "<=", e2) -> boolop (<=) (<=) env e1 e2
-    | BinOp (e1, "=", e2) -> boolop (=) (=) env e1 e2
-    | BinOp (e1, ">=", e2) -> boolop (>=) (>=) env e1 e2
-    | BinOp (e1, ">", e2) -> boolop (>) (>) env e1 e2
+    | BinOp (e1, "<", e2) -> comparisonop (<) (<) env e1 e2
+    | BinOp (e1, "<=", e2) -> comparisonop (<=) (<=) env e1 e2
+    | BinOp (e1, "=", e2) -> comparisonop (=) (=) env e1 e2
+    | BinOp (e1, ">=", e2) -> comparisonop (>=) (>=) env e1 e2
+    | BinOp (e1, ">", e2) -> comparisonop (>) (>) env e1 e2
 
-    | UnOp (op, e) -> failwith "TODO"
+    // Boolean operators
+    | BinOp (e1, "and", e2) -> boolop (&&) env e1 e2
+    | BinOp (e1, "or", e2) -> boolop (||) env e1 e2
+    | UnOp ("not", e) -> boolunop not env e
 
     | _ -> unexpected_error "eval_expr: unsupported expression: %s [AST: %A]" (pretty_expr e) e
 
@@ -87,13 +108,9 @@ and binop op_int op_float env e1 e2 =
     | VLit (LFloat x), VLit (LFloat y) -> VLit(LFloat(op_float x y))
     | VLit (LInt x), VLit (LFloat y) -> VLit(LFloat(op_float (float x) y))
     | VLit (LFloat x), VLit (LInt y) -> VLit(LFloat(op_float x (float y)))
-    | _ ->
-        unexpected_error
-            "eval_expr: illegal operands in binary operator (+): %s + %s"
-            (pretty_value v1)
-            (pretty_value v2)
+    | _ -> unexpected_error "eval_expr: illegal operands in binary operator: %s, %s" (pretty_value v1) (pretty_value v2)
 
-and boolop op_int op_float env e1 e2 =
+and comparisonop op_int op_float env e1 e2 =
     let v1 = eval_expr env e1
     let v2 = eval_expr env e2
 
@@ -108,9 +125,18 @@ and boolop op_int op_float env e1 e2 =
             (pretty_value v1)
             (pretty_value v2)
 
-and unop op env e =
+and boolop op env e1 e2 =
+    let v1 = eval_expr env e1
+    let v2 = eval_expr env e2
+
+    match v1, v2 with
+    | VLit (LBool b1), VLit (LBool b2) -> VLit(LBool(op b1 b2))
+    | _ ->
+        unexpected_error "eval_expres: illegal operands in boolean operator: %s, %s" (pretty_value v1) (pretty_value v2)
+
+and boolunop op env e =
     let v = eval_expr env e
 
     match v with
-    | VLit (LBool x) -> VLit(LBool(op e))
+    | VLit (LBool x) -> VLit(LBool(op x))
     | _ -> unexpected_error "eval_expr: illegal operand in unary boolean operator: %s" (pretty_value v)

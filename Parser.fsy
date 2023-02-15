@@ -18,6 +18,7 @@ let parse_error_rich = Some (fun ctx -> raise (ParseErrorContextException ctx))
        TRUE FALSE 
        BRA KET 
        PLUS MINUS STAR SLASH PERCENT
+       PLUS_DOT MINUS_DOT STAR_DOT SLASH_DOT PERCENT_DOT
        LT GT LEQ GEQ EQ NEQ
        AND OR NOT
        COLON SEMICOLON2 COMMA
@@ -29,8 +30,8 @@ let parse_error_rich = Some (fun ctx -> raise (ParseErrorContextException ctx))
 %left OR
 %left AND 
 %left EQ LT GT LEQ GEQ NEQ
-%left PLUS MINUS 
-%left STAR SLASH MOD 
+%left PLUS PLUS_DOT MINUS MINUS_DOT
+%left STAR STAR_DOT SLASH SLASH_DOT MOD MOD_DOT
 %left APP
 %nonassoc NOT
 %nonassoc UMINUS
@@ -100,10 +101,15 @@ expr_tuple_atom:
   | MINUS expr_tuple_atom %prec UMINUS  		            { UnOp ("-", $2) }
 
   | expr_tuple_atom PLUS expr_tuple_atom					{ BinOp ($1, "+", $3) }
+  | expr_tuple_atom PLUS_DOT expr_tuple_atom			    { BinOp ($1, "+.", $3) }
   | expr_tuple_atom MINUS expr_tuple_atom					{ BinOp ($1, "-", $3) }
+  | expr_tuple_atom MINUS_DOT expr_tuple_atom				{ BinOp ($1, "-.", $3) }
   | expr_tuple_atom STAR expr_tuple_atom					{ BinOp ($1, "*", $3) }
+  | expr_tuple_atom STAR_DOT expr_tuple_atom				{ BinOp ($1, "*.", $3) }
   | expr_tuple_atom SLASH expr_tuple_atom					{ BinOp ($1, "/", $3) }
+  | expr_tuple_atom SLASH_DOT expr_tuple_atom				{ BinOp ($1, "/.", $3) }
   | expr_tuple_atom PERCENT expr_tuple_atom				    { BinOp ($1, "%", $3) }
+  | expr_tuple_atom PERCENT_DOT expr_tuple_atom			    { BinOp ($1, "%.", $3) }
 
   | expr_tuple_atom EQ expr_tuple_atom						{ BinOp ($1, "=", $3) }
   | expr_tuple_atom NEQ expr_tuple_atom						{ BinOp ($1, "<>", $3) }
