@@ -6,18 +6,36 @@ open TypeInferencingUtils
 
 let gamma0: scheme env =
     [
-      // int ops
+      // arithmetic int ops
       ("+", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyInt))))
       ("-", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyInt))))
       ("/", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyInt))))
       ("*", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyInt))))
       ("%", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyInt))))
-      // float ops
+      // arithmetic float ops
       ("+.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyFloat))))
       ("-.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyFloat))))
       ("/.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyFloat))))
       ("*.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyFloat))))
-      ("%.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyFloat)))) ]
+      ("%.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyFloat))))
+      // comparison int ops
+      ("<", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyBool))))
+      ("<=", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyBool))))
+      ("=", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyBool))))
+      (">=", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyBool))))
+      (">", generalize [] (TyArrow(TyInt, TyArrow(TyInt, TyBool))))
+      // comparison float ops
+      ("<.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyBool))))
+      ("<=.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyBool))))
+      ("=.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyBool))))
+      (">=.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyBool))))
+      (">.", generalize [] (TyArrow(TyFloat, TyArrow(TyFloat, TyBool))))
+      // boolean ops
+      ("and", generalize [] (TyArrow(TyBool, TyArrow(TyBool, TyBool))))
+      ("or", generalize [] (TyArrow(TyBool, TyArrow(TyBool, TyBool))))
+      ("not", generalize [] (TyArrow(TyBool, TyArrow(TyBool, TyBool))))
+
+      ]
 
 let (++) = compose_subst
 
@@ -33,7 +51,7 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
     | Var x ->
         try
 
-            let _, Forall (tv, ty) = List.find (fun (y, _) -> x = y) env
+            let _, Forall (_, ty) = List.find (fun (y, _) -> x = y) env
             ty, []
         with
         | _ -> throw_formatted UndefinedError "The value or constructor '%s' is not defined." x
@@ -123,57 +141,10 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
         let s3 = s2 ++ s1
         t2, s3
 
-    // Math operators
+    // check if defined
     | BinOp (e1, op, e2) -> typeinfer_expr env (App(App(Var op, e1), e2))
-    //let t1, s1 = typeinfer_expr env e1
-    //let t2, s2 = typeinfer_expr (apply_subst_env env s1) e2
-    //let s3 = s2 ++ s1
-    //let s4 = unify t1 t2
-    //let s5 = s4 ++ s3
-    //let t3 = apply_subst t1 s5
-    //let s6 = try_unify t3 numeric_types
 
-    //match s6 with
-    //| Some s -> apply_subst t3 s, s ++ s5
-    //| None -> type_error "arithmetic operators only support numeric types"
-
-    //| BinOp (e1,
-    //         ("<"
-    //         | "<="
-    //         | "="
-    //         | ">="
-    //         | ">"
-    //         | "<>"),
-    //         e2) ->
-    //    let t1, s1 = typeinfer_expr env e1
-    //    let t2, s2 = typeinfer_expr (apply_subst_env env s1) e2
-    //    let s3 = s2 ++ s1
-    //    let s4 = unify t1 t2
-    //    let s5 = s4 ++ s3
-    //    let t = apply_subst t1 s5
-    //    let s6 = try_unify t numeric_types
-
-    //    match s6 with
-    //    | Some s -> TyBool, s
-    //    | None -> type_error "arithmetic operators only support numeric types"
-
-    //| BinOp (e1,
-    //         ("and"
-    //         | "or" as op),
-    //         e2) ->
-    //    let t1, s1 = typeinfer_expr env e1
-    //    let t2, s2 = typeinfer_expr env e2
-    //    let s3 = unify t1 TyBool
-    //    let s4 = unify t2 TyBool
-    //    let s = s4 ++ s3 ++ s2 ++ s1
-    //    TyBool, s
-
-    //| BinOp (_, op, _) -> unexpected_error "typecheck_expr: unsupported binary operator (%s)" op
-
-    //| UnOp ("not", e) ->
-    //    let t, s1 = typeinfer_expr env e
-    //    let s2 = unify t TyBool ++ s1
-    //    TyBool, s2
+    | UnOp (op, e) -> typeinfer_expr env (App(Var op, e))
 
     //| UnOp ("-", e) ->
     //    let t, s1 = typeinfer_expr env e
@@ -183,6 +154,5 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
     //    | Some s -> t, s
     //    | None -> type_error "minus operator only supports numeric types"
 
-    | UnOp (op, _) -> unexpected_error "typecheck_expr: unsupported unary operator (%s)" op
 
     | _ -> unexpected_error "typecheck_expr: unsupported expression: %s [AST: %A]" (pretty_expr e) e

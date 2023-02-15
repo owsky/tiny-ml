@@ -58,11 +58,17 @@ and tokenize = parse
 	| '%'			{ PERCENT }
 	| "%."			{ PERCENT_DOT }
 	| '='			{ EQ }
+	| "=."			{ EQ_DOT }
 	| "<>"			{ NEQ }
+	| "<>."			{ NEQ_DOT }
 	| '<'			{ LT }
+	| "<."			{ LT_DOT }
 	| '>'			{ GT }
+	| ">."			{ GT_DOT }
 	| "<="			{ LEQ }
+	| "<=."			{ LEQ_DOT }
 	| ">="			{ GEQ }
+	| ">=."			{ GEQ_DOT }
 	| "or"			{ OR }
 	| "and"			{ AND }
 	| "not"			{ NOT }

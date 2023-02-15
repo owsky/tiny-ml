@@ -30,6 +30,12 @@ type token =
   | GEQ
   | EQ
   | NEQ
+  | LT_DOT
+  | GT_DOT
+  | LEQ_DOT
+  | GEQ_DOT
+  | EQ_DOT
+  | NEQ_DOT
   | AND
   | OR
   | NOT
@@ -71,6 +77,12 @@ type tokenId =
     | TOKEN_GEQ
     | TOKEN_EQ
     | TOKEN_NEQ
+    | TOKEN_LT_DOT
+    | TOKEN_GT_DOT
+    | TOKEN_LEQ_DOT
+    | TOKEN_GEQ_DOT
+    | TOKEN_EQ_DOT
+    | TOKEN_NEQ_DOT
     | TOKEN_AND
     | TOKEN_OR
     | TOKEN_NOT

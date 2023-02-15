@@ -82,15 +82,25 @@ let rec eval_expr (env: value env) (e: expr) : value =
 
         match v with
         | VLit (LInt x) -> VLit(LInt(-x))
+        | _ -> unexpected_error "eval_expr: - operator requires type int, got: %s" (pretty_value v)
+    | UnOp ("-.", e) ->
+        let v = eval_expr env e
+
+        match v with
         | VLit (LFloat x) -> VLit(LFloat(-x))
-        | _ -> unexpected_error "eval_expr: illegal operand in unary boolean operator: %s" (pretty_value v)
+        | _ -> unexpected_error "eval_expr: -. operator requires type float, got: %s" (pretty_value v)
 
     // Comparison operators
     | BinOp (e1, "<", e2) -> comparisonop (<) (<) env e1 e2
+    | BinOp (e1, "<.", e2) -> comparisonop (<) (<) env e1 e2
     | BinOp (e1, "<=", e2) -> comparisonop (<=) (<=) env e1 e2
+    | BinOp (e1, "<=.", e2) -> comparisonop (<=) (<=) env e1 e2
     | BinOp (e1, "=", e2) -> comparisonop (=) (=) env e1 e2
+    | BinOp (e1, "=.", e2) -> comparisonop (=) (=) env e1 e2
     | BinOp (e1, ">=", e2) -> comparisonop (>=) (>=) env e1 e2
+    | BinOp (e1, ">=.", e2) -> comparisonop (>=) (>=) env e1 e2
     | BinOp (e1, ">", e2) -> comparisonop (>) (>) env e1 e2
+    | BinOp (e1, ">.", e2) -> comparisonop (>) (>) env e1 e2
 
     // Boolean operators
     | BinOp (e1, "and", e2) -> boolop (&&) env e1 e2
@@ -98,6 +108,14 @@ let rec eval_expr (env: value env) (e: expr) : value =
     | UnOp ("not", e) -> boolunop not env e
 
     | _ -> unexpected_error "eval_expr: unsupported expression: %s [AST: %A]" (pretty_expr e) e
+
+and binop_float op env e1 e2 =
+    let v1 = eval_expr env e1
+    let v2 = eval_expr env e2
+
+    match v1, v2 with
+    | VLit (LFloat x), VLit (LFloat y) -> VLit(LFloat(op x y))
+    | _ -> unexpected_error "eval_expr: illegal operands in binary operator: %s, %s" (pretty_value v1) (pretty_value v2)
 
 and binop op_int op_float env e1 e2 =
     let v1 = eval_expr env e1
