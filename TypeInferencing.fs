@@ -1,7 +1,6 @@
 module TinyML.TypeInferencing
 
 open Ast
-open Utilities
 open TypeInferencingUtils
 
 let gamma0: scheme env = ops_types
@@ -34,8 +33,9 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
         let s3 = s2 ++ s1
 
         match tyo with
-        | Some ty when t2 <> ty ->
-            type_error "Type annotation %s is incompatible with type %s" (pretty_ty ty) (pretty_ty t2)
+        | Some ty ->
+            let s4 = unify t2 ty
+            apply_subst t2 s4, s4
         | _ -> t2, s3
 
     | IfThenElse (e1, e2, e3o) ->
@@ -63,12 +63,12 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
         let scheme = Forall(Set.empty, alpha)
         let t2, s1 = typeinfer_expr ((x, scheme) :: env) e
         let t1 = apply_subst alpha s1
-        let res = TyArrow(t1, t2), s1
 
         match tyo with
-        | Some ty when ty <> fst res ->
-            type_error "Type annotation '%s' is not compatible with type '%s'" (pretty_ty ty) (pretty_ty (fst res))
-        | _ -> res
+        | Some ty ->
+            let s2 = unify ty t1
+            TyArrow(apply_subst t1 s2, apply_subst t2 s2), s2
+        | _ -> TyArrow(t1, t2), s1
 
     | App (e1, e2) ->
         let t1, s1 = typeinfer_expr env e1
@@ -93,9 +93,6 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
         TyTuple(ty), List.last subst
 
     | LetRec (f, tyo, e1, e2) ->
-        if tyo.IsSome then
-            printfn "TYO: %O\n\n" (pretty_ty (tyo.Value))
-
         let alpha = fresh_tyvar ()
         let rec_binding = Forall(Set.empty, alpha)
         let gamma1 = (f, rec_binding) :: env
@@ -110,18 +107,8 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
         let s3 = s2 ++ s1
         t2, s3
 
-    // check if defined
     | BinOp (e1, op, e2) -> typeinfer_expr env (App(App(Var op, e1), e2))
 
     | UnOp (op, e) -> typeinfer_expr env (App(Var op, e))
-
-    //| UnOp ("-", e) ->
-    //    let t, s1 = typeinfer_expr env e
-    //    let s2 = try_unify t numeric_types
-
-    //    match s2 with
-    //    | Some s -> t, s
-    //    | None -> type_error "minus operator only supports numeric types"
-
 
     | _ -> unexpected_error "typecheck_expr: unsupported expression: %s [AST: %A]" (pretty_expr e) e

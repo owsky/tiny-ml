@@ -54,7 +54,7 @@ let rec check_domain (s: subst) =
                 type_error "Domain not disjointed"
         | None -> check_domain xs
 
-/// Given two substitutions it produces a single, composed substitution TODO HANDLE ERRORS STATES
+/// Given two substitutions it produces a single, composed substitution
 let compose_subst (s1: subst) (s2: subst) : subst =
     let merged =
         List.map
