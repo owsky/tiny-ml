@@ -8,6 +8,8 @@ module TinyML.Main
 open System
 open FSharp.Common
 open Ast
+open Printers
+open Exceptions
 open Utilities
 
 let parse_from_TextReader rd filename parser =

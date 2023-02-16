@@ -1,7 +1,10 @@
 module TinyML.TypeInferencing
 
 open Ast
+open Printers
+open Exceptions
 open TypeInferencingUtils
+open Init
 
 let gamma0: scheme env = ops_types
 
@@ -34,7 +37,7 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
 
         match tyo with
         | Some ty ->
-            let s4 = unify t2 ty
+            let s4 = unify t2 ty ++ s3
             apply_subst t2 s4, s4
         | _ -> t2, s3
 
@@ -57,7 +60,6 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
         else
             apply_subst t2 s5, s5
 
-    // let sum1 x = x + 1;;
     | Lambda (x, tyo, e) ->
         let alpha = fresh_tyvar ()
         let scheme = Forall(Set.empty, alpha)
@@ -66,7 +68,7 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
 
         match tyo with
         | Some ty ->
-            let s2 = unify ty t1
+            let s2 = unify ty t1 ++ s1
             TyArrow(apply_subst t1 s2, apply_subst t2 s2), s2
         | _ -> TyArrow(t1, t2), s1
 
@@ -114,7 +116,7 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
 
         match tyo with
         | Some ty ->
-            let s4 = unify ty t2
+            let s4 = unify ty t2 ++ s3
             let t3 = apply_subst t2 s4
             t3, s4
         | None ->

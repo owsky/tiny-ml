@@ -80,6 +80,14 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Ast.fs" />
+    <Compile Include="Exceptions.fs" />
+    <Compile Include="Utilities.fs" />
+    <Compile Include="Printers.fs" />
+    <Compile Include="TypeChecking.fs" />
+    <Compile Include="TypeInferencingUtils.fs" />
+    <Compile Include="Init.fs" />
+    <Compile Include="Eval.fs" />
+    <Compile Include="TypeInferencing.fs" />
     <Compile Include="Parsing.fs" />
     <FsYacc Include="Parser.fsy">
       <OtherFlags>--module TinyML.Parser -v</OtherFlags>
@@ -90,11 +98,6 @@
     <Compile Include="Parser.fsi" />
     <Compile Include="Parser.fs" />
     <Compile Include="Lexer.fs" />
-    <Compile Include="Utilities.fs" />
-    <Compile Include="TypeChecking.fs" />
-    <Compile Include="TypeInferencingUtils.fs" />
-    <Compile Include="TypeInferencing.fs" />
-    <Compile Include="Eval.fs" />
     <Compile Include="Main.fs" />
     <None Include="App.config" />
     <Content Include="packages.config" />

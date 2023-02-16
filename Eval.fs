@@ -6,7 +6,9 @@
 module TinyML.Eval
 
 open Ast
-open TypeInferencingUtils
+open Exceptions
+open Printers
+open Init
 open Utilities
 
 let get_f op l =

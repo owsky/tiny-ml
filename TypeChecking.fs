@@ -6,6 +6,8 @@
 module TinyML.TypeChecking
 
 open Ast
+open Printers
+open Exceptions
 open Utilities
 
 // basic environment: add builtin operators at will

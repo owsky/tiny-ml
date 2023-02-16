@@ -1,6 +1,7 @@
 ﻿module TinyML.TypeInferencingUtils
 
 open Ast
+open Printers
 open Utilities
 
 let mutable tyvar_counter = 0
@@ -51,7 +52,12 @@ let rec check_domain (s: subst) =
         match findo with
         | Some (tvf, tyf) ->
             if tyf <> ty then
-                type_error "Domain not disjointed"
+                type_error
+                    "domain not disjointed: can't map tyvar: %s to type: %s because tyvar: %s is already mapped to type: %s"
+                    (pretty_ty (TyVar tvf))
+                    (pretty_ty ty)
+                    (pretty_ty (TyVar tvf))
+                    (pretty_ty tyf)
         | None -> check_domain xs
 
 /// Given two substitutions it produces a single, composed substitution
@@ -63,7 +69,7 @@ let compose_subst (s1: subst) (s2: subst) : subst =
 
                 if belongs tv (snd r) then
                     type_error
-                        "Circularity not allowed: tv: %s belongs to type: %s"
+                        "circularity not allowed: tv: %s belongs to type: %s"
                         (pretty_ty (TyVar tv))
                         (pretty_ty (snd r))
                 else
@@ -83,7 +89,7 @@ let rec unify (t1: ty) (t2: ty) : subst =
     | TyVar tv, t
     | t, TyVar tv ->
         if belongs tv t then
-            type_error "Circularity not allowed: tv: %s belongs to type: %s" (pretty_ty (TyVar tv)) (pretty_ty t)
+            type_error "circularity not allowed: tv: %s belongs to type: %s" (pretty_ty (TyVar tv)) (pretty_ty t)
         else
             [ tv, t ]
 
@@ -93,10 +99,7 @@ let rec unify (t1: ty) (t2: ty) : subst =
         List.zip ts1 ts2
         |> List.fold (fun s (t1, t2) -> compose_subst s (unify t1 t2)) []
 
-    | TyArrow (_, _), w
-    | w, TyArrow (_, _) -> type_error "expected type function, got %s instead" (pretty_ty w)
-
-    | _ -> type_error "The type %s does not match the type %s" (pretty_ty t1) (pretty_ty t2)
+    | _ -> type_error "the type %s does not match the type %s" (pretty_ty t1) (pretty_ty t2)
 
 /// Returns the free type variables contained in a type
 let rec freevars_ty t =
@@ -126,64 +129,3 @@ let rec refresh (Forall (sch, ty)) =
 
 /// Instantiates a type scheme into a concrete type by refreshing the type variables
 let instantiate (sch: scheme) = refresh sch
-
-let gen = generalize []
-
-let init_ops l = pick_a_b_list l, pick_a_c_list l
-
-// supported operators
-let int_ops_types, (int_ops: (string * (int -> int -> int)) list) =
-    init_ops (
-        [ ("+", gen (TyArrow(TyInt, TyArrow(TyInt, TyInt))), (+))
-          ("/", gen (TyArrow(TyInt, TyArrow(TyInt, TyInt))), (/))
-          ("*", gen (TyArrow(TyInt, TyArrow(TyInt, TyInt))), (*))
-          ("%", gen (TyArrow(TyInt, TyArrow(TyInt, TyInt))), (%)) ]
-    )
-
-let int_uops_types, (int_uops: (string * (int -> int)) list) =
-    init_ops ([ ("-", gen (TyArrow(TyInt, TyInt)), (fun x -> -x)) ])
-
-
-let float_ops_types, (float_ops: (string * (float -> float -> float)) list) =
-    init_ops (
-        [ ("+.", gen (TyArrow(TyFloat, TyArrow(TyFloat, TyFloat))), (+))
-          ("-.", gen (TyArrow(TyFloat, TyArrow(TyFloat, TyFloat))), (-))
-          ("/.", gen (TyArrow(TyFloat, TyArrow(TyFloat, TyFloat))), (/))
-          ("*.", gen (TyArrow(TyFloat, TyArrow(TyFloat, TyFloat))), (*))
-          ("%.", gen (TyArrow(TyFloat, TyArrow(TyFloat, TyFloat))), (%)) ]
-    )
-
-let int_comp_ops_types, (int_comp_ops: (string * (int -> int -> bool)) list) =
-    init_ops (
-        [ ("<", gen (TyArrow(TyInt, TyArrow(TyInt, TyBool))), (<))
-          ("<=", gen (TyArrow(TyInt, TyArrow(TyInt, TyBool))), (<=))
-          ("=", gen (TyArrow(TyInt, TyArrow(TyInt, TyBool))), (=))
-          (">=", gen (TyArrow(TyInt, TyArrow(TyInt, TyBool))), (>=))
-          (">", gen (TyArrow(TyInt, TyArrow(TyInt, TyBool))), (>)) ]
-    )
-
-let float_comp_ops_types, (float_comp_ops: (string * (float -> float -> bool)) list) =
-    init_ops (
-        [ ("<.", gen (TyArrow(TyFloat, TyArrow(TyFloat, TyBool))), (<))
-          ("<=.", gen (TyArrow(TyFloat, TyArrow(TyFloat, TyBool))), (<=))
-          ("=.", gen (TyArrow(TyFloat, TyArrow(TyFloat, TyBool))), (=))
-          (">=.", gen (TyArrow(TyFloat, TyArrow(TyFloat, TyBool))), (>=))
-          (">.", gen (TyArrow(TyFloat, TyArrow(TyFloat, TyBool))), (>)) ]
-    )
-
-let bool_ops_types, bool_ops =
-    init_ops (
-        [ ("and", gen (TyArrow(TyBool, TyArrow(TyBool, TyBool))), (&&))
-          ("or", gen (TyArrow(TyBool, TyArrow(TyBool, TyBool))), (||)) ]
-    )
-
-let bool_uops_types, bool_uops =
-    init_ops ([ ("not", gen (TyArrow(TyBool, TyArrow(TyBool, TyBool))), (not)) ])
-
-let ops_types =
-    int_ops_types
-    @ int_uops_types
-      @ float_ops_types
-        @ int_comp_ops_types
-          @ float_comp_ops_types
-            @ bool_ops_types @ bool_uops_types
