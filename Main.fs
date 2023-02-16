@@ -78,7 +78,6 @@ let main_interactive () =
                  |> replace_integers)
                 (pretty_value v)
 
-
 [<EntryPoint>]
 let main argv =
     let r =

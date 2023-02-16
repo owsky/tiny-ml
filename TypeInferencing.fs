@@ -46,16 +46,17 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
 
         let s3 = s2 ++ s1
         let gamma1 = apply_subst_env env s3
-
         let t2, s4 = typeinfer_expr gamma1 e2
+
         let s5 = s4 ++ s3
-        let gamma2 = apply_subst_env gamma1 s5
 
         if e3o.IsSome then
+            let gamma2 = apply_subst_env env s5
             let t3, s6 = typeinfer_expr gamma2 e3o.Value
             let s7 = s6 ++ s5
             let s8 = unify (apply_subst t2 s7) (apply_subst t3 s7)
-            apply_subst t2 s8, s8 ++ s7
+            let s9 = s8 ++ s7
+            apply_subst t2 s9, s9
         else
             apply_subst t2 s5, s5
 
@@ -99,16 +100,11 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
         TyTuple(ty), List.last subst
 
     | LetRec (f, tyo, e1, e2) ->
-        let alpha = fresh_tyvar ()
-        let rec_binding = Forall(Set.empty, alpha)
-        let gamma1 = (f, rec_binding) :: env
-        let t1, s1 = typeinfer_expr gamma1 e1
+        let t1, s1 = typeinfer_expr ((f, Forall(Set.empty, fresh_tyvar ())) :: env) e1
 
-        let gamma2 = apply_subst_env gamma1 s1
-        let sigma = generalize gamma2 t1
-        let gamma3 = (f, sigma) :: gamma2
+        let sigma = generalize (apply_subst_env env s1) t1
 
-        let t2, s2 = typeinfer_expr gamma3 e2
+        let t2, s2 = typeinfer_expr ((f, sigma) :: (apply_subst_env env s1)) e2
 
         let s3 = s2 ++ s1
 
@@ -117,9 +113,7 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
             let s4 = unify ty t2 ++ s3
             let t3 = apply_subst t2 s4
             t3, s4
-        | None ->
-
-            t2, s3
+        | None -> t2, s3
 
     | BinOp (e1, op, e2) -> typeinfer_expr env (App(App(Var op, e1), e2))
 

@@ -11,6 +11,7 @@ let init_ops l = pick_a_b_list l, pick_a_c_list l
 let int_ops_types, (int_ops: (string * (int -> int -> int)) list) =
     init_ops (
         [ ("+", gen (TyArrow(TyInt, TyArrow(TyInt, TyInt))), (+))
+          ("-", gen (TyArrow(TyInt, TyArrow(TyInt, TyInt))), (-))
           ("/", gen (TyArrow(TyInt, TyArrow(TyInt, TyInt))), (/))
           ("*", gen (TyArrow(TyInt, TyArrow(TyInt, TyInt))), (*))
           ("%", gen (TyArrow(TyInt, TyArrow(TyInt, TyInt))), (%)) ]
