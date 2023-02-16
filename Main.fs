@@ -34,7 +34,7 @@ let main_interpreter filename =
         use fstr = new IO.FileStream(filename, IO.FileMode.Open)
         use rd = new IO.StreamReader(fstr)
         let prg = parse_from_TextReader rd filename Parser.program
-        let t, v = interpret_expr [] [] prg
+        let t, v = interpret_expr TypeInferencing.gamma0 [] prg
 
         printfn
             "type:\t%s\nvalue:\t%s"

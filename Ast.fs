@@ -176,7 +176,7 @@ let rec pretty_value v =
 
     | RecClosure (env, f, x, e) -> sprintf "<|%s;%s;%s;%s|>" (pretty_env pretty_value env) f x (pretty_expr e)
 
-// The function that normalizes the tyvars in a type with a counter starting from 0
+// The function that normalizes the tyvars in a type with a counter starting from 0 TODO REVIEW THIS
 let normalize_tyvars ty =
     let counter = ref -1 // create a local counter
 

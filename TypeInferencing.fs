@@ -57,7 +57,7 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
         else
             apply_subst t2 s5, s5
 
-
+    // let sum1 x = x + 1;;
     | Lambda (x, tyo, e) ->
         let alpha = fresh_tyvar ()
         let scheme = Forall(Set.empty, alpha)
@@ -74,18 +74,24 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
         let t1, s1 = typeinfer_expr env e1
         let t2, s2 = typeinfer_expr (apply_subst_env env s1) e2
         let alpha = fresh_tyvar ()
-        // WHY FLIPPED
+        // WHY FLIPPED TODO
         let s3 = unify (TyArrow(t2, alpha)) t1
         let t = apply_subst alpha s3
-        let s4 = s3 ++ s2
+        let s4 = s3 ++ s2 ++ s1
         t, s4
 
     | Tuple tu ->
         let (ty, subst) =
             List.fold
                 (fun acc e ->
-                    let ti, si = typeinfer_expr env e
-                    acc @ [ (ti, si) ])
+                    let si_1 =
+                        match List.tryLast acc with
+                        | Some s -> snd s
+                        | None -> []
+
+                    let ti, si = typeinfer_expr (apply_subst_env env si_1) e
+                    acc @ [ (ti, si ++ si_1) ])
+
                 []
                 tu
             |> List.unzip
@@ -105,7 +111,15 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
         let t2, s2 = typeinfer_expr gamma3 e2
 
         let s3 = s2 ++ s1
-        t2, s3
+
+        match tyo with
+        | Some ty ->
+            let s4 = unify ty t2
+            let t3 = apply_subst t2 s4
+            t3, s4
+        | None ->
+
+            t2, s3
 
     | BinOp (e1, op, e2) -> typeinfer_expr env (App(App(Var op, e1), e2))
 

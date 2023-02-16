@@ -62,7 +62,10 @@ let compose_subst (s1: subst) (s2: subst) : subst =
                 let r = (tv, apply_subst ty s1)
 
                 if belongs tv (snd r) then
-                    type_error "Circularity not allowed"
+                    type_error
+                        "Circularity not allowed: tv: %s belongs to type: %s"
+                        (pretty_ty (TyVar tv))
+                        (pretty_ty (snd r))
                 else
                     r)
             s2
@@ -76,11 +79,11 @@ let compose_subst (s1: subst) (s2: subst) : subst =
 let rec unify (t1: ty) (t2: ty) : subst =
     match (t1, t2) with
     | TyName s1, TyName s2 when s1 = s2 -> []
-
+    | TyVar tv1, TyVar tv2 when tv1 = tv2 -> []
     | TyVar tv, t
     | t, TyVar tv ->
         if belongs tv t then
-            type_error "Circularity not allowed"
+            type_error "Circularity not allowed: tv: %s belongs to type: %s" (pretty_ty (TyVar tv)) (pretty_ty t)
         else
             [ tv, t ]
 
@@ -94,19 +97,6 @@ let rec unify (t1: ty) (t2: ty) : subst =
     | w, TyArrow (_, _) -> type_error "expected type function, got %s instead" (pretty_ty w)
 
     | _ -> type_error "The type %s does not match the type %s" (pretty_ty t1) (pretty_ty t2)
-
-let try_unify (t1: ty) (l: ty list) : subst option =
-    List.fold
-        (fun acc t2 ->
-            if acc.IsNone then
-                try
-                    Some(unify t1 t2)
-                with
-                | _ -> None
-            else
-                acc)
-        None
-        l
 
 /// Returns the free type variables contained in a type
 let rec freevars_ty t =

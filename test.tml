@@ -1,13 +1,1 @@
-(*
-let rec fact x =
-	if x = 1 then 1
-	else x * fact (x - (1))
-in
-let fact3 = fact 3 in
-
-let a = 20 in
-let b = if a < 5 then true else false in
-
-let f x y z = x * y * z in f 1 2 3
-*)
-(fun x->x)5
+let sum1 x = x + 1 in sum1
