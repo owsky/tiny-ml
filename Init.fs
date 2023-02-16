@@ -55,7 +55,7 @@ let bool_ops_types, bool_ops =
     )
 
 let bool_uops_types, bool_uops =
-    init_ops ([ ("not", gen (TyArrow(TyBool, TyArrow(TyBool, TyBool))), (not)) ])
+    init_ops ([ ("not", gen (TyArrow(TyBool, TyBool)), (not)) ])
 
 let ops_types =
     int_ops_types
