@@ -17,3 +17,31 @@ let rec fib2 n acc1 acc2 =
 in fib2 20 0 1
 *)
 
+(*
+let f a b c d e =
+	if a and e then
+		if (b +. c) <=. 10. then
+			d
+		else
+			('A', 4)
+	else
+		d
+in f (true and true) (10. %. 0.75) (3.14 *. 0.789) (('C', 420)) (not false)
+*)
+
+(*
+let useless (x: unit) = () in useless ()
+*)
+
+(*
+let ann (a: int) (b: char) (c: float) (d: bool) e =
+	if (a > (100 / 4)) and (not d) then
+		(b, c)
+	else
+		('a', 1.)
+in ann 5 'k' 3.14 true ()
+*)
+
+// let ann: int -> int -> float -> bool -> unit = fun (x: int) -> fun (y: int) -> fun (w: float) -> fun (z: bool) -> () in ann
+
+// let ann (x: int) (y: int) (w: float) (z: bool) : int -> int -> float -> bool -> unit = () in ann
