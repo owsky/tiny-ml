@@ -1,2 +1,1 @@
-let f a b c d = (a,b,c,d) in
-let g a b c = (a,b,c) in g
+(fun x->x) 5

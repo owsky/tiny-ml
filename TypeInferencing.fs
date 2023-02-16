@@ -20,12 +20,11 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
     | Lit LUnit -> TyUnit, []
 
     | Var x ->
-        try
+        let findo = List.tryFind (fun (id, _) -> id = x) env
 
-            let _, Forall (_, ty) = List.find (fun (y, _) -> x = y) env
-            ty, []
-        with
-        | _ -> throw_formatted UndefinedError "The value or constructor '%s' is not defined." x
+        match findo with
+        | Some (_, scheme) -> instantiate scheme, []
+        | None -> throw_formatted UndefinedError "The value or constructor '%s' is not defined." x
 
     | Let (x, tyo, e1, e2) ->
         let t1, s1 = typeinfer_expr env e1
@@ -76,8 +75,7 @@ let rec typeinfer_expr (env: scheme env) (e: expr) : ty * subst =
         let t1, s1 = typeinfer_expr env e1
         let t2, s2 = typeinfer_expr (apply_subst_env env s1) e2
         let alpha = fresh_tyvar ()
-        // WHY FLIPPED TODO
-        let s3 = unify (TyArrow(t2, alpha)) t1
+        let s3 = unify t1 (TyArrow(t2, alpha))
         let t = apply_subst alpha s3
         let s4 = s3 ++ s2 ++ s1
         t, s4

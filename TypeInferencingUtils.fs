@@ -51,13 +51,16 @@ let rec check_domain (s: subst) =
 
         match findo with
         | Some (tvf, tyf) ->
-            if tyf <> ty then
-                type_error
-                    "domain not disjointed: can't map tyvar: %s to type: %s because tyvar: %s is already mapped to type: %s"
-                    (pretty_ty (TyVar tvf))
-                    (pretty_ty ty)
-                    (pretty_ty (TyVar tvf))
-                    (pretty_ty tyf)
+            match ty with
+            //| TyVar _ -> check_domain xs
+            | _ ->
+                if tyf <> ty then
+                    type_error
+                        "domain not disjointed: can't map tyvar: %s to type: %s because tyvar: %s is already mapped to type: %s"
+                        (pretty_ty (TyVar tvf))
+                        (pretty_ty ty)
+                        (pretty_ty (TyVar tvf))
+                        (pretty_ty tyf)
         | None -> check_domain xs
 
 /// Given two substitutions it produces a single, composed substitution
@@ -78,7 +81,6 @@ let compose_subst (s1: subst) (s2: subst) : subst =
         @ s1
 
     check_domain merged
-
     merged
 
 /// Given two types it produces a substitution by unifying them
@@ -86,6 +88,7 @@ let rec unify (t1: ty) (t2: ty) : subst =
     match (t1, t2) with
     | TyName s1, TyName s2 when s1 = s2 -> []
     | TyVar tv1, TyVar tv2 when tv1 = tv2 -> []
+
     | TyVar tv, t
     | t, TyVar tv ->
         if belongs tv t then
@@ -93,7 +96,14 @@ let rec unify (t1: ty) (t2: ty) : subst =
         else
             [ tv, t ]
 
-    | TyArrow (t1, t2), TyArrow (t3, t4) -> compose_subst (unify t1 t3) (unify t2 t4)
+    | TyArrow (t1, t2), TyArrow (t3, t4) ->
+        // to allow the unification of two arrow types to be commutative despite the composition
+        // not being commutative, first unify the domains then apply the resulting substitution
+        // to both codomains. Lastly proceed with the unification of the codomains and composition
+        let s = unify t1 t3
+        let t2 = apply_subst t2 s
+        let t4 = apply_subst t4 s
+        compose_subst (unify t2 t4) s
 
     | TyTuple ts1, TyTuple ts2 when List.length ts1 = List.length ts2 ->
         List.zip ts1 ts2
