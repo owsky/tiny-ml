@@ -15,11 +15,17 @@ let trap f =
     | UnexpectedError msg -> printfn "\nunexpected error: %s" msg
     | UndefinedError msg -> printfn "\nerror: %s" msg
 
+/// Given a triple, returns a pair made of the first and second items
 let pick_a_b (a, b, _) = (a, b)
+/// Given a triple. returns a pair mde of the first and third items
 let pick_a_c (a, _, c) = (a, c)
+/// Given a list of triples, returns a list of pairs made of the first and second items for each triple
 let pick_a_b_list l = List.map pick_a_b l
+/// Given a list of triples, returns a list of pairs made of the first and third items for each triple
 let pick_a_c_list l = List.map pick_a_c l
+/// Given a list of pairs, return a list made of the first element of each pair
 let fst_l l = List.map fst l
+/// Given a list of pairs, return a list made of the second element of each pair
 let snd_l l = List.map snd l
 
 /// Given a type, returns a new type with all the type variables normalized

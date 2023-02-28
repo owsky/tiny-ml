@@ -45,3 +45,4 @@ in ann 5 'k' 3.14 true ()
 // let ann: int -> int -> float -> bool -> unit = fun (x: int) -> fun (y: int) -> fun (w: float) -> fun (z: bool) -> () in ann
 
 // let ann (x: int) (y: int) (w: float) (z: bool) : int -> int -> float -> bool -> unit = () in ann
+
