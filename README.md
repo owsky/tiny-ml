@@ -27,4 +27,5 @@ When launched in interactive mode a terminal screen will appear awaiting express
 Standard mode instead will simply locate the 'test.tml' file, infer the type of its expression and return the results.  
   
 In either case the algorithm expects expressions to be formed in the following way:  
-e1 <b>in</b> e2 <b>in</b> ... <b>in</b> en<b>;;</b>
+e1 <b>in</b> e2 <b>in</b> ... <b>in</b> en<b>;;</b>  
+whereas each e is a sub-expression and the double colon mark the end of line. 
