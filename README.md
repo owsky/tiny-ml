@@ -28,4 +28,4 @@ Standard mode instead will simply locate the 'test.tml' file, infer the type of 
   
 In either case the algorithm expects expressions to be formed in the following way:  
 e1 <b>in</b> e2 <b>in</b> ... <b>in</b> en<b>;;</b>  
-whereas each e is a sub-expression and the double colon mark the end of line. 
+whereas each e is a sub-expression and the double colon marks the end of line. 
