@@ -1,9 +1,4 @@
-﻿(*
-* TinyML
-* Typing.fs: typing algorithms
-*)
-
-module TinyML.TypeChecking
+﻿module TinyML.TypeChecking
 
 open Ast
 open Printers

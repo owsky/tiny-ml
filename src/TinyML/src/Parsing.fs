@@ -1,10 +1,4 @@
-﻿(*
-* F# Common Library
-* Parsing.fs: parsing facilities
-* (C) 2007-2021 Alvise Spano' @ Universita' Ca' Foscari di Venezia
-*)
-
-module FSharp.Common.Parsing
+﻿module FSharp.Common.Parsing
 
 #nowarn "52"
 
@@ -109,13 +103,13 @@ let yparse syntax_error parser (tokenizer: Lexing.LexBuffer<_> -> 'tok) tokenTag
 
 let init_lexbuf filename (start_line, start_col) (lexbuf: Lexing.LexBuffer<_>) =
     let r =
-        { Lexing.Position.pos_bol = 0
-          Lexing.Position.pos_fname = filename
-          Lexing.Position.pos_cnum = start_col
-          Lexing.Position.pos_lnum = start_line }
-
+        { Lexing.Position.pos_bol       = 0
+          Lexing.Position.pos_cnum      = start_col
+          Lexing.Position.pos_fname     = filename
+          Lexing.Position.pos_lnum      = start_line
+          Lexing.Position.pos_orig_lnum = start_line }
     lexbuf.StartPos <- r
-    lexbuf.EndPos <- r
+    lexbuf.EndPos   <- r
 
 let parse_from_lexbuf syntax_error lexbuf filename (start_line, start_col) parser tokenizer tokenTagToTokenId =
     init_lexbuf filename (start_line, start_col) lexbuf

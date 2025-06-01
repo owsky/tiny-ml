@@ -8,6 +8,9 @@ let id x = x in
 (fun x -> fun y -> fun z -> (id x, id y, id z % 3)) (f 5. b %. 15.) (g true true or false) (a * 3)
 *)
 
+let f = fun x -> if x =. 2. then (x *. 3., true, 0) else (x /. 2., false, 1)
+in f
+
 (*
 let rec fib2 n acc1 acc2 =
 	if n = 0 then

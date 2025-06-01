@@ -1,5 +1,5 @@
 ﻿{
-
+module TinyML.Lexer
 open System
 open FSharp.Text.Lexing
 
@@ -102,6 +102,3 @@ and tokenize = parse
 
 	// identifiers
 	| id 		            { ID (lexeme lexbuf) }
-
-
-

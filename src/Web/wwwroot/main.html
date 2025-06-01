@@ -1,0 +1,25 @@
+<nav class="navbar" role="navigation" aria-label="main navigation">
+    <div class="navbar-start">
+        <ul>
+            ${Menu}
+            <template id="MenuItem">
+                <li><a class="navbar-item ${Active} has-text-white has-text-weight-semibold" href="${Url}">${Text}</a></li>
+            </template>
+        </ul>
+    </div>
+</nav>
+
+<section class="section">
+    ${Body}
+
+    <div id="notification-area">
+        <div>${Error}</div>
+    </div>
+
+    <template id="ErrorNotification">
+        <div class="notification is-warning">
+            <button class="delete ${HideClass}" onclick="${Hide}"></button>
+            ${Text}
+        </div>
+    </template>
+</section>

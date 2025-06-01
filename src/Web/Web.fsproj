@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Bolero" Version="0.24.39" />
+    <PackageReference Include="Bolero.Build" Version="0.24.39" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Components\Syntax.fs" />
+    <Compile Include="Components\TypeInference.fs" />
+    <Compile Include="Components\Home.fs" />
+    <Compile Include="Main.fs" />
+    <Compile Include="Startup.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TinyML\TinyML.fsproj" />
+  </ItemGroup>
+
+  <Target Name="EnsureNodeModules" BeforeTargets="CompileSass">
+    <Message Text="Ensuring Node modules are installed..." Importance="high" />
+    <Exec Command="npm install" WorkingDirectory="$(ProjectDir)" Condition="!Exists('$(ProjectDir)node_modules')" />
+    <Message Text="Node modules installed correctly" Importance="high" />
+  </Target>
+
+  <Target Name="CompileSass" BeforeTargets="ResolveStaticWebAssetsInputs;PrepareForBuild">
+    <Message Text="Compiling Bulma..." Importance="high" />
+    <Exec Command="npx sass --load-path=node_modules bulma/bulma.scss:wwwroot/css/bulma.css --style=compressed --no-source-map" WorkingDirectory="$(ProjectDir)" ContinueOnError="false" />
+    <Message Text="Bulma compiled successfully" Importance="high" />
+  </Target>
+
+</Project>

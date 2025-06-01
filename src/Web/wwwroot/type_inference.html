@@ -1,0 +1,29 @@
+<template id="TypeInference">
+    <div class="content box">
+        <h1 class="title">Type Inference</h1>
+        <div class="field is-grouped is-align-items-center">
+            <div class="control">
+                <label class="label" style="margin-right: 0.5rem; margin-bottom: 0;">Example program:</label>
+            </div>
+            ${ExamplePrograms}
+        </div>
+        <div class="field">
+            <div class="control">
+                <textarea class="textarea" placeholder="Enter your code here..." bind="${SourceCode}"></textarea>
+            </div>
+        </div>
+        <div class="field">
+            <div class="control">
+                <button class="button" id="infer_btn" onclick="${Analyze}">Infer Type</button>
+            </div>
+        </div>
+    </div>
+    ${AnalysisResult}
+</template>
+
+<template id="AnalysisResult">
+    <div class="content box mt-4">
+        <h1 class="title">${ResultTitle}</h1>
+        <pre>${ResultContent}</pre>
+    </div>
+</template>

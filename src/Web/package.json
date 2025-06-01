@@ -1,0 +1,22 @@
+{
+  "name": "tiny-ml-web",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/owsky/tiny-ml-web.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/owsky/tiny-ml-web/issues"
+  },
+  "homepage": "https://github.com/owsky/tiny-ml-web#readme",
+  "devDependencies": {
+    "bulma": "^1.0.4",
+    "sass": "^1.89.0"
+  }
+}

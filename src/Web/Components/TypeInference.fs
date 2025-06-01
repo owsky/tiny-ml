@@ -1,0 +1,86 @@
+﻿module Components.TypeInference
+
+open Elmish
+open Bolero
+open Bolero.Html
+open TinyML.Main
+
+let exampleProgramsMap = 
+    Map.empty
+        .Add("Constant", "5")
+        .Add("Identity", "fun x -> x")
+        .Add("Let Binding", sprintf "let x = 10 in\nx + 5")
+        .Add("Application", sprintf "let f = fun x -> x + 1 in\nf 0")
+        .Add("If Then Else", sprintf "let x = 3 in\nif x = 5 then x / 2 else x * 2")
+        .Add("Tuples", sprintf "let f = fun x -> if x =. 2. then (x *. 3., true, 0) else (x /. 2., false, 1)\nin f 3.")
+
+type Model = {
+    sourceCode: string
+    analysis: Result<string, string> option
+    selectedExample: string
+}
+
+let init = {
+    sourceCode = ""
+    analysis = None
+    selectedExample = ""
+}
+
+type Message =
+    | SetSourceCode of string
+    | ComputeAnalysis
+    | SelectExample of string
+
+let update message model =
+    match message with
+    | SetSourceCode code -> { model with sourceCode = code; selectedExample = "" }, Cmd.none
+    | ComputeAnalysis -> 
+        let output = analyzeCode model.sourceCode
+        match output with
+        | Ok res -> { model with analysis = Some (Ok (format_results true res)) }, Cmd.none
+        | Error err -> { model with analysis = Some (Error (err)) }, Cmd.none
+    | SelectExample exampleTitle ->
+        let newSourceCode = Map.find exampleTitle exampleProgramsMap
+        { model with selectedExample = exampleTitle; sourceCode = newSourceCode }, Cmd.none
+
+/// load the template
+type TypeInference = Template<"wwwroot/type_inference.html">
+
+let mySelect (model: Model) (dispatch: Dispatch<Message>) : Node =
+    div {
+        attr.``class`` "control"
+        div {
+            attr.``class`` "select"
+            select {
+                bind.change.string model.selectedExample (fun value ->
+                    dispatch (SelectExample value)
+                )
+                for exampleProgram in Map.keys exampleProgramsMap do
+                    option { 
+                        attr.value (exampleProgram)
+                        text (exampleProgram) 
+                    }
+            }
+        }
+    }
+
+let createAnalysisResult (title: string) (content: string) = 
+    TypeInference
+        .AnalysisResult()
+        .ResultTitle(title)
+        .ResultContent(content)
+        .Elt()
+
+let view model dispatch =
+    TypeInference
+        .TypeInference()
+        .SourceCode(model.sourceCode, fun code -> dispatch (SetSourceCode code))
+        .Analyze(fun _ -> if model.sourceCode.Length <> 0 then dispatch ComputeAnalysis)
+        .AnalysisResult(
+            match (model.analysis) with
+            | None -> empty()
+            | (Some (Ok analysis)) -> createAnalysisResult "Inferred Type" analysis
+            | (Some (Error err)) -> createAnalysisResult "Error" err
+        )
+        .ExamplePrograms(mySelect model dispatch)
+        .Elt()

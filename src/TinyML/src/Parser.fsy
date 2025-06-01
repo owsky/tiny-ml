@@ -1,5 +1,4 @@
 ﻿%{
-
 open TinyML
 open FSharp.Common.Parsing.LexYacc
 open TinyML.Ast
@@ -38,19 +37,13 @@ let parse_error_rich = Some (fun ctx -> raise (ParseErrorContextException ctx))
 %nonassoc UMINUS
 
 %type < TinyML.Ast.expr > program
-%type < TinyML.Ast.interactive > interactive
 
 %start program
-%start interactive
 
 %%
 
 program:
     expr EOF                           { $1 }
-
-interactive:
-    expr SEMICOLON2                     { IExpr $1 }
-  | binding SEMICOLON2                  { IBinding $1 }
 
 expr:
     expr_tuple_atom                         { $1 }

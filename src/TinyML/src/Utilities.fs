@@ -5,16 +5,6 @@ open Exceptions
 
 let type_error fmt = throw_formatted TypeError fmt
 
-let trap f =
-    try
-        f ()
-    with
-    | SyntaxError (msg, lexbuf) ->
-        printfn "\nsyntax error: %s\nat token: %A\nlocation: %O" msg lexbuf.Lexeme lexbuf.EndPos
-    | TypeError msg -> printfn "\ntype error: %s" msg
-    | UnexpectedError msg -> printfn "\nunexpected error: %s" msg
-    | UndefinedError msg -> printfn "\nerror: %s" msg
-
 /// Given a triple, returns a pair made of the first and second items
 let pick_a_b (a, b, _) = (a, b)
 /// Given a triple. returns a pair mde of the first and third items

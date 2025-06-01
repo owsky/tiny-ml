@@ -1,9 +1,4 @@
-﻿(*
-* TinyML
-* Ast.fs: abstract syntax tree
-*)
-
-// AST type definitions
+﻿// AST type definitions
 module TinyML.Ast
 
 type tyvar = int
@@ -80,7 +75,3 @@ type value =
     | VTuple of value list
     | Closure of value env * string * expr
     | RecClosure of value env * string * string * expr
-
-type interactive =
-    | IExpr of expr
-    | IBinding of binding

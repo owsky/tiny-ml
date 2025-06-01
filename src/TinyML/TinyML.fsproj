@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <FsYaccOutputFolder>$(IntermediateOutputPath)src/</FsYaccOutputFolder>
+    <FsLexOutputFolder>$(IntermediateOutputPath)src/</FsLexOutputFolder>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FsLexYacc.Runtime" Version="11.3.0" />
+    <PackageReference Include="FsLexYacc" Version="11.3.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="src\AssemblyInfo.fs" />
+    <Compile Include="src\Ast.fs" />
+    <Compile Include="src\Exceptions.fs" />
+    <Compile Include="src\Utilities.fs" />
+    <Compile Include="src\Printers.fs" />
+    <Compile Include="src\TypeChecking.fs" />
+    <Compile Include="src\TypeInferencingUtils.fs" />
+    <Compile Include="src\Init.fs" />
+    <Compile Include="src\Eval.fs" />
+    <Compile Include="src\TypeInferencing.fs" />
+    <Compile Include="src\Parsing.fs" />
+    <Compile Include="src\Parser.fs" />
+    <Compile Include="src\Lexer.fs" />
+    <Compile Include="src\Main.fs" />
+    <FsLex Include="src\Lexer.fsl">
+      <OtherFlags>--unicode</OtherFlags>
+    </FsLex>
+    <FsYacc Include="src\Parser.fsy">
+      <OtherFlags>--module TinyML.Parser</OtherFlags>
+    </FsYacc>
+  </ItemGroup>
+
+</Project>
