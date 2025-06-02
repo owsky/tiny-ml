@@ -1,8 +1,19 @@
 ﻿module Components.Syntax
 
 open Bolero
+open Bolero.Html
 
-/// load the template
-type Syntax = Template<"wwwroot/syntax.html">
+type Component() =
+    inherit ElmishComponent<unit, unit>()
 
-let view model dispatch = Syntax.Syntax().Elt()
+    override this.View _ _ =
+        div {
+            attr.``class`` "content box"
+            h1 {
+                attr.``class`` "title"
+                text "TinyML Syntax"
+            }
+            p {
+                text "The language's syntax is structured around expressions. Indeed, a program is nothing else than a chain of expressions not unlike Lambda calculus."
+            }
+        }

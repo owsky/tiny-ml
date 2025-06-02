@@ -11,15 +11,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="Components\Syntax.fs" />
-    <Compile Include="Components\TypeInference.fs" />
-    <Compile Include="Components\Home.fs" />
-    <Compile Include="Main.fs" />
-    <Compile Include="Startup.fs" />
+    <Content Include="bulma\bulma.scss" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="wwwroot\_redirects" />
+    <Compile Include="Routing.fs" />
+    <Content Include="components\TypeInference.bolero.css" />
+    <Compile Include="Components\TypeInference.fs" />
+    <Compile Include="Components\NavBar.fs" />
+    <Compile Include="Components\Syntax.fs" />
+    <Compile Include="Components\Home.fs" />
+    <Content Include="MyApp.bolero.css" />
+    <Compile Include="Main.fs" />
+    <Compile Include="Startup.fs" />
   </ItemGroup>
 
   <ItemGroup>

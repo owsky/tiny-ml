@@ -43,9 +43,6 @@ let update message model =
         let newSourceCode = Map.find exampleTitle exampleProgramsMap
         { model with selectedExample = exampleTitle; sourceCode = newSourceCode }, Cmd.none
 
-/// load the template
-type TypeInference = Template<"wwwroot/type_inference.html">
-
 let mySelect (model: Model) (dispatch: Dispatch<Message>) : Node =
     div {
         attr.``class`` "control"
@@ -65,22 +62,66 @@ let mySelect (model: Model) (dispatch: Dispatch<Message>) : Node =
     }
 
 let createAnalysisResult (title: string) (content: string) = 
-    TypeInference
-        .AnalysisResult()
-        .ResultTitle(title)
-        .ResultContent(content)
-        .Elt()
+    div {
+        attr.``class`` "content box mt-4"
+        h1 {
+            attr.``class`` "title"
+            text title
+        }
+        pre {
+            text content
+        }
+    }
 
-let view model dispatch =
-    TypeInference
-        .TypeInference()
-        .SourceCode(model.sourceCode, fun code -> dispatch (SetSourceCode code))
-        .Analyze(fun _ -> if model.sourceCode.Length <> 0 then dispatch ComputeAnalysis)
-        .AnalysisResult(
-            match (model.analysis) with
-            | None -> empty()
-            | (Some (Ok analysis)) -> createAnalysisResult "Inferred Type" analysis
-            | (Some (Error err)) -> createAnalysisResult "Error" err
-        )
-        .ExamplePrograms(mySelect model dispatch)
-        .Elt()
+type Component() =
+    inherit ElmishComponent<Model, Message>()
+
+    override this.View model dispatch =
+        concat {
+            div {
+                attr.``class`` "content box"
+                h1 {
+                    attr.``class`` "title"
+                    text "Type Inference"
+                }
+                div {
+                    attr.``class`` "field is-grouped is-align-items-center"
+                    div {
+                        attr.``class`` "control"
+                        label {
+                            attr.``class`` "label"
+                            attr.style "margin-right: 0.5rem; margin-bottom: 0;"
+                            text "Example program:"
+                        }
+                        mySelect model dispatch
+                    }
+                }
+                div {
+                    attr.``class`` "field"
+                    div {
+                        attr.``class`` "control"
+                        textarea {
+                            attr.``class`` "textarea"
+                            attr.placeholder "Enter your code here..."
+                            bind.change.string model.sourceCode (dispatch << SetSourceCode)
+                        }
+                    }
+                }
+                div {
+                    attr.``class`` "field"
+                    div {
+                        attr.``class`` "control"
+                        button {
+                            attr.``class`` "button"
+                            attr.id "infer_btn"
+                            on.click (fun _ -> if model.sourceCode.Length <> 0 then dispatch ComputeAnalysis)
+                            text "Infer Type"
+                        }
+                    }
+                }
+            }
+            cond model.analysis <| function
+                | None -> empty()
+                | Some (Ok analysis) -> createAnalysisResult "Inferred Type" analysis
+                | Some (Error err) -> createAnalysisResult "Error" err
+        }
