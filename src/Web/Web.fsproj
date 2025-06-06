@@ -17,6 +17,7 @@
   <ItemGroup>
     <Compile Include="Routing.fs" />
     <Content Include="components\TypeInference.bolero.css" />
+    <Content Include="components\NavBar.bolero.css" />
     <Compile Include="Components\TypeInference.fs" />
     <Compile Include="Components\NavBar.fs" />
     <Compile Include="Components\Syntax.fs" />

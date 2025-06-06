@@ -11,6 +11,8 @@ type NavBarModel = {
 type NavBar() =
     inherit ElmishComponent<NavBarModel, unit>()
 
+    override _.CssScope = CssScopes.NavBar
+
     override this.View model _ =
         let createMenuItem item =
             let baseClass = "navbar-item has-text-white has-text-weight-semibold"

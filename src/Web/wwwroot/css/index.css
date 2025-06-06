@@ -1,3 +1,11 @@
+@font-face {
+    font-family: "Fira Code";
+    src: local(), url("/fonts/fira_code.ttf"), format("truetype");
+    font-weight: 300 700;
+    font-style: normal;
+    font-display: swap;
+}
+
 html,
 body {
   height: 100%;
@@ -10,4 +18,8 @@ body {
 
 #main {
   flex: 1;
+}
+
+a {
+    text-decoration: underline;
 }

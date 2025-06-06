@@ -4,6 +4,7 @@ open Elmish
 open Bolero
 open Bolero.Html
 open TinyML.Main
+open Microsoft.AspNetCore.Components
 
 let exampleProgramsMap = 
     Map.empty
@@ -61,29 +62,39 @@ let mySelect (model: Model) (dispatch: Dispatch<Message>) : Node =
         }
     }
 
-let createAnalysisResult (title: string) (content: string) = 
+let createAnalysisResult (title: string) (content: string) =
+    let replaceTabs (s: string) = s.Replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;")
+    let boldHeadings = Array.map (fun (s: string) -> if s.EndsWith ":" then $"<strong>{s}</strong>" else s)
+    let lines = content.TrimEnd('\n').Split("\n") |> boldHeadings
+    let htmlContent = lines |> Array.map replaceTabs |> String.concat "<br />"
     div {
         attr.``class`` "content box mt-4"
         h1 {
             attr.``class`` "title"
             text title
         }
-        pre {
-            text content
+        div {
+            attr.``class`` "textarea output"
+            attr.rows <| lines.Length + 1
+            rawHtml htmlContent
         }
     }
 
 type Component() =
     inherit ElmishComponent<Model, Message>()
 
+    override _.CssScope = CssScopes.TypeInference
+
     override this.View model dispatch =
         concat {
             div {
                 attr.``class`` "content box"
+                // Box title
                 h1 {
                     attr.``class`` "title"
                     text "Type Inference"
                 }
+                // 
                 div {
                     attr.``class`` "field is-grouped is-align-items-center"
                     div {
@@ -93,6 +104,9 @@ type Component() =
                             attr.style "margin-right: 0.5rem; margin-bottom: 0;"
                             text "Example program:"
                         }
+                    }
+                    div {
+                        attr.``class`` "control"
                         mySelect model dispatch
                     }
                 }
@@ -103,6 +117,7 @@ type Component() =
                         textarea {
                             attr.``class`` "textarea"
                             attr.placeholder "Enter your code here..."
+                            attr.name "source code text area"
                             bind.change.string model.sourceCode (dispatch << SetSourceCode)
                         }
                     }
