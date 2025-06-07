@@ -4,7 +4,6 @@ open Elmish
 open Bolero
 open Bolero.Html
 open TinyML.Main
-open Microsoft.AspNetCore.Components
 
 let exampleProgramsMap = 
     Map.empty
@@ -19,18 +18,21 @@ type Model = {
     sourceCode: string
     analysis: Result<string, string> option
     selectedExample: string
+    verbose: bool
 }
 
 let init = {
     sourceCode = ""
     analysis = None
     selectedExample = ""
+    verbose = false
 }
 
 type Message =
     | SetSourceCode of string
     | ComputeAnalysis
     | SelectExample of string
+    | SetVerbose of bool
 
 let update message model =
     match message with
@@ -38,46 +40,21 @@ let update message model =
     | ComputeAnalysis -> 
         let output = analyzeCode model.sourceCode
         match output with
-        | Ok res -> { model with analysis = Some (Ok (format_results true res)) }, Cmd.none
+        | Ok res -> { model with analysis = Some (Ok (format_results model.verbose res)) }, Cmd.none
         | Error err -> { model with analysis = Some (Error (err)) }, Cmd.none
     | SelectExample exampleTitle ->
         let newSourceCode = Map.find exampleTitle exampleProgramsMap
         { model with selectedExample = exampleTitle; sourceCode = newSourceCode }, Cmd.none
-
-let mySelect (model: Model) (dispatch: Dispatch<Message>) : Node =
-    div {
-        attr.``class`` "control"
-        div {
-            attr.``class`` "select"
-            select {
-                bind.change.string model.selectedExample (fun value ->
-                    dispatch (SelectExample value)
-                )
-                for exampleProgram in Map.keys exampleProgramsMap do
-                    option { 
-                        attr.value (exampleProgram)
-                        text (exampleProgram) 
-                    }
-            }
-        }
-    }
+    | SetVerbose v -> { model with verbose = v }, Cmd.none
 
 let createAnalysisResult (title: string) (content: string) =
-    let replaceTabs (s: string) = s.Replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;")
-    let boldHeadings = Array.map (fun (s: string) -> if s.EndsWith ":" then $"<strong>{s}</strong>" else s)
-    let lines = content.TrimEnd('\n').Split("\n") |> boldHeadings
-    let htmlContent = lines |> Array.map replaceTabs |> String.concat "<br />"
     div {
         attr.``class`` "content box mt-4"
         h1 {
             attr.``class`` "title"
             text title
         }
-        div {
-            attr.``class`` "textarea output"
-            attr.rows <| lines.Length + 1
-            rawHtml htmlContent
-        }
+        ecomp<CodeBlock.Component,_,_> { sourceCode = content } ignore { attr.empty() }
     }
 
 type Component() =
@@ -102,14 +79,30 @@ type Component() =
                         label {
                             attr.``class`` "label"
                             attr.style "margin-right: 0.5rem; margin-bottom: 0;"
-                            text "Example program:"
+                            text "Example program"
                         }
                     }
                     div {
                         attr.``class`` "control"
-                        mySelect model dispatch
+                        div {
+                            attr.``class`` "control"
+                            div {
+                                attr.``class`` "select"
+                                select {
+                                    bind.change.string model.selectedExample (fun value ->
+                                        dispatch (SelectExample value)
+                                    )
+                                    for exampleProgram in Map.keys exampleProgramsMap do
+                                        option { 
+                                            attr.value (exampleProgram)
+                                            text (exampleProgram) 
+                                        }
+                                }
+                            }
+                        }
                     }
                 }
+                ecomp<CheckBox.Component,_,_> { isChecked = model.verbose; label = "Verbose Output" } (fun (CheckBox.SetChecked c) -> dispatch (SetVerbose c)) { attr.empty() }
                 div {
                     attr.``class`` "field"
                     div {

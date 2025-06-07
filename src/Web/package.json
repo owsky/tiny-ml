@@ -15,8 +15,11 @@
     "url": "https://github.com/owsky/tiny-ml-web/issues"
   },
   "homepage": "https://github.com/owsky/tiny-ml-web#readme",
-  "devDependencies": {
+  "dependencies": {
     "bulma": "^1.0.4",
     "sass": "^1.89.0"
+  },
+  "scripts": {
+    "build_bulma": "npx sass --load-path=node_modules bulma/bulma.scss:wwwroot/css/bulma.css --style=compressed --no-source-map"
   }
 }

@@ -54,8 +54,6 @@ let view (model: Model) dispatch =
                 ecomp<Home.Component,_,_> () ignore { attr.empty() }
             | TypeInferencePage -> 
                 ecomp<TypeInference.Component,_,_> model.TypeInference (TypeInferenceMsg >> dispatch) { attr.empty() }
-            | SyntaxPage -> 
-                ecomp<Syntax.Component,_,_> () ignore { attr.empty() }
         }
     }
 

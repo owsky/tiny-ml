@@ -1,12 +1,4 @@
-textarea, .output {
+textarea {
     font-family: 'Fira Code', Arial, monospace;
     font-size: 0.95rem;
-}
-
-.output {
-    cursor: text;
-    color: #ABB1BF;
-    background-color: #14161A;
-    padding: 1em;
-    white-space: pre-wrap;
 }

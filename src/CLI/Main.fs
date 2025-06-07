@@ -27,19 +27,15 @@ let main argv =
     let reader = EnvironmentVariableConfigurationReader() :> IConfigurationReader
     let parser = ArgumentParser.Create<Arguments>(programName = "TinyML")
     let args = parser.Parse(argv, configurationReader = reader)
-
     let source_code = args.GetResult Source_Code
     let verbose = args.Contains Verbose
 
-    let maybe_program = read_file source_code
-
-    match maybe_program with
+    read_file source_code |> function
     | Error err ->
         printfn $"{err}"
         1
     | Ok program ->
-        let result = analyzeCode program
-        match result with
+        analyzeCode program |> function
         | Ok r -> 
             printfn "%s" (format_results verbose r)
         | Error e ->

@@ -5,6 +5,7 @@ open Printers
 open Exceptions
 open Utilities
 open Ast
+open FSharp.Text.Lexing
 
 type Results = {
     ast: expr
@@ -35,7 +36,6 @@ let format_results verbose results: string =
         ast_str + input_str + type_str + value_str
     else
         type_str + value_str
-        
 
 /// Run the full pipeline: parse, infer types, evaluate, and return result string
 let analyzeCode (inputCode: string) : Result<Results, string> =
@@ -44,7 +44,8 @@ let analyzeCode (inputCode: string) : Result<Results, string> =
         Ok <| interpret_expr TypeInferencing.gamma0 [] prg
     with
     | SyntaxError (msg, lexbuf) ->
-        Error <| sprintf  "\nSyntax error: %s\nAt token: %A\nLocation: %O" msg lexbuf.Lexeme lexbuf.EndPos
+        let format_err_location (pos: Position): string = sprintf $"Line: {pos.pos_lnum}\nColumn: {pos.pos_cnum}"
+        Error <| sprintf  "\nSyntax error: %s\nAt token: %A\nLocation: %s" msg lexbuf.Lexeme (format_err_location lexbuf.EndPos)
       | TypeError msg ->
           Error <| sprintf "\nType error: %s" msg
       | UnexpectedError msg ->

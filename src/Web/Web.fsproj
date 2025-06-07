@@ -15,13 +15,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="components\CheckBox.bolero.css" />
+    <Compile Include="Components\CheckBox.fs" />
     <Compile Include="Routing.fs" />
-    <Content Include="components\TypeInference.bolero.css" />
+    <Content Include="Components\CodeBlock.bolero.css" />
+    <Compile Include="Components\CodeBlock.fs" />
     <Content Include="components\NavBar.bolero.css" />
-    <Compile Include="Components\TypeInference.fs" />
     <Compile Include="Components\NavBar.fs" />
-    <Compile Include="Components\Syntax.fs" />
     <Compile Include="Components\Home.fs" />
+    <Content Include="components\TypeInference.bolero.css" />
+    <Compile Include="Components\TypeInference.fs" />
     <Content Include="MyApp.bolero.css" />
     <Compile Include="Main.fs" />
     <Compile Include="Startup.fs" />
